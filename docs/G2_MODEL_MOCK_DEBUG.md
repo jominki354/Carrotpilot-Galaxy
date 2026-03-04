@@ -115,11 +115,21 @@ powershell -ExecutionPolicy Bypass -File tools/run_g2_real_camera_auto.ps1
 - `MODEL_SOURCE_REAL_CAMERA -> RESET_G2 -> START_G2`
 - T2 running / after-resume / stopped 스냅샷 수집
 - T3 2분/5분/stopped 스냅샷 수집
+- `BENCH-SUMMARY` 기능 판정 + 핵심 성능 수치 출력
 
 3. 빠른 검증용(짧은 시간 파라미터):
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools/run_g2_real_camera_auto.ps1 -T3FirstWindowSeconds 3 -T3SecondWindowSeconds 3
 ```
+
+벤치 판정 기준(현재):
+1. 기능 합격:
+- `g2_stage=STABLE`
+- `g2_error=NONE`
+- `g2_inference_ready=true`
+- `g2_inference_failures=0`
+2. 성능 수치:
+- `model_hz`, `inference_latency_ms_p95`, `frame_drop_perc`는 관측값으로 출력(강제 임계치 미적용)
 
 ## 8. Backend 전환 게이트 (QNN/SNPE)
 

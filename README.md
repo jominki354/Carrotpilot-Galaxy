@@ -58,6 +58,22 @@ Android 16 / One UI 8 기반 `single-APK` 코어 런타임으로 Carrotpilot/ope
 - `T3-2MIN`
 - `T3-5MIN`
 - `T3-STOPPED`
+3. 요약 라벨:
+- `BENCH-SUMMARY`
+- `bench_verdict` (기능 합격: stage/error/failure 기준)
+- `t3_2min_model_hz`, `t3_2min_p95_ms`, `t3_2min_drop_perc`
+- `t3_5min_model_hz`, `t3_5min_p95_ms`, `t3_5min_drop_perc`
+
+Real Camera 최신 벤치(2026-03-04, external `driving_vision.onnx`):
+1. 기능 안정성:
+- `bench_verdict=PASS`
+- `t2_verdict=PASS`, `t3_verdict=PASS`
+2. 성능 관측:
+- `t3_2min_model_hz=12.9`, `p95_ms=68.25`, `drop_perc=35.3`
+- `t3_5min_model_hz=12.8`, `p95_ms=69.35`, `drop_perc=35.8`
+3. 해석:
+- 기능/복귀/장시간 에러 없는 동작은 확보
+- FPS/지연/드롭은 최적화 단계에서 추가 개선 필요
 
 ONNX 호환성 프로브:
 1. `powershell -ExecutionPolicy Bypass -File tools/run_g2_onnx_compat_probe.ps1`
