@@ -32,6 +32,7 @@ Android 16 / One UI 8 기반 `single-APK` 코어 런타임으로 Carrotpilot/ope
 5. `REAL_CAMERA` 모드:
 - CameraX Y plane을 `ModelInputFrame`으로 추출
 - 입력 스키마(예: `img`, `big_img`) 크기에 맞춰 nearest-neighbor resize 후 채널 축으로 반복 주입
+- 동일 shape 다중 입력은 패턴 생성 결과를 1회 캐시해 재사용
 - openpilot `DT_MDL(20Hz)` 방식과 유사하게 최신 프레임 기준 고정 주기 추론 루프 사용
 
 진행 게이트:
@@ -69,16 +70,18 @@ Android 16 / One UI 8 기반 `single-APK` 코어 런타임으로 Carrotpilot/ope
 4. 임계치 커스텀 예시:
 - `powershell -ExecutionPolicy Bypass -File tools/run_g2_real_camera_auto.ps1 -MinModelHz 18 -MaxFrameDropPerc 15 -MaxP95Ms 65`
 
-Real Camera 최신 벤치(2026-03-04, external `driving_vision.onnx`):
+Real Camera 최신 벤치(2026-03-04, external `comma_model.onnx`):
 1. 기능 안정성:
-- `bench_verdict=PASS`
-- `t2_verdict=PASS`, `t3_verdict=PASS`
+- `t2_verdict=PASS` (복귀 안정성은 유지)
 2. 성능 관측:
-- `t3_2min_model_hz=18.4`, `p95_ms=66.66`, `drop_perc=8.0`
-- `t3_5min_model_hz=17.5`, `p95_ms=68.71`, `drop_perc=12.7`
+- run A: `t3_2min_model_hz=18.2`, `p95_ms=67.41`, `drop_perc=8.8`
+- run A: `t3_5min_model_hz=17.3`, `p95_ms=104.63`, `drop_perc=13.5`
+- run B(연속 가열 상태): `t3_2min_model_hz=15.5`, `p95_ms=74.26`, `drop_perc=22.7`
+- run B(연속 가열 상태): `t3_5min_model_hz=15.4`, `p95_ms=70.62`, `drop_perc=22.9`
 3. 해석:
-- 기능/복귀/장시간 에러 없는 동작은 확보
-- FPS/드롭은 개선됐고, p95 지연은 추가 최적화가 필요
+- 기능/복귀/장시간 에러 없는 동작은 유지
+- 장시간 구간은 열 상태에 따라 `Hz/drop/p95` 편차가 커서 perf gate(`17Hz/20%/70ms`)를 안정 통과하지 못함
+- 다음 단계는 NNAPI/QNN 백엔드 또는 입력/주기 적응 제어를 추가해 열-지속 성능을 고정해야 함
 
 현재 G3 상태(2026-03-04):
 1. state machine 최소 루프 추가 (`DISABLED/PRE_ENABLED/ENABLED/SOFT_DISABLING/OVERRIDING`)

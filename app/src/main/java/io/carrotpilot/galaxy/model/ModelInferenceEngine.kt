@@ -180,9 +180,17 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
     val startedAtNs = System.nanoTime()
     var result: OrtSession.Result? = null
     val tensors = linkedMapOf<String, OnnxTensor>()
+    val imagePatternCache = HashMap<String, ByteArray>()
     return try {
       specs.forEachIndexed { index, spec ->
-        tensors[spec.name] = createInputTensor(env, spec, frameTimestampMs, index, inputFrame)
+        tensors[spec.name] = createInputTensor(
+          env = env,
+          spec = spec,
+          frameTimestampMs = frameTimestampMs,
+          inputIndex = index,
+          inputFrame = inputFrame,
+          imagePatternCache = imagePatternCache,
+        )
       }
       result = currentSession.run(tensors)
       val latencyMs = (System.nanoTime() - startedAtNs) / 1_000_000.0
@@ -291,8 +299,15 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
     frameTimestampMs: Long,
     inputIndex: Int,
     inputFrame: ModelInputFrame?,
+    imagePatternCache: MutableMap<String, ByteArray>,
   ): OnnxTensor {
-    val unsignedPattern = buildUnsignedBytePattern(spec, frameTimestampMs, inputIndex, inputFrame)
+    val unsignedPattern = buildUnsignedBytePattern(
+      spec = spec,
+      frameTimestampMs = frameTimestampMs,
+      inputIndex = inputIndex,
+      inputFrame = inputFrame,
+      imagePatternCache = imagePatternCache,
+    )
     return when (spec.type) {
       OnnxJavaType.FLOAT -> {
         val data = FloatArray(spec.elementCount) { index ->
@@ -365,11 +380,18 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
     frameTimestampMs: Long,
     inputIndex: Int,
     inputFrame: ModelInputFrame?,
+    imagePatternCache: MutableMap<String, ByteArray>,
   ): ByteArray {
+    val cachedPattern = imagePatternCache[specPatternCacheKey(spec)]
+    if (cachedPattern != null) {
+      return cachedPattern
+    }
+
     val fromImage = inputFrame?.let { frame ->
       buildImageDerivedPattern(spec, frame)
     }
     if (fromImage != null) {
+      imagePatternCache[specPatternCacheKey(spec)] = fromImage
       return fromImage
     }
 
@@ -392,10 +414,22 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
       targetHeight = targetHeight,
     )
     if (resized.isEmpty()) return null
-
-    return ByteArray(spec.elementCount) { index ->
-      resized[index % resized.size]
+    if (resized.size == spec.elementCount) {
+      return resized
     }
+
+    val planeSize = resized.size
+    if (planeSize > 0 && spec.elementCount % planeSize == 0) {
+      val output = ByteArray(spec.elementCount)
+      var writeOffset = 0
+      while (writeOffset < output.size) {
+        System.arraycopy(resized, 0, output, writeOffset, planeSize)
+        writeOffset += planeSize
+      }
+      return output
+    }
+
+    return ByteArray(spec.elementCount) { index -> resized[index % planeSize] }
   }
 
   private fun resolveTargetImageSize(
@@ -436,7 +470,7 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
       return ByteArray(0)
     }
     if (sourceWidth == targetWidth && sourceHeight == targetHeight) {
-      return source.copyOf(sourceWidth * sourceHeight)
+      return source
     }
 
     val output = ByteArray(targetWidth * targetHeight)
@@ -473,6 +507,10 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
       cores >= 4 -> 2
       else -> 1
     }
+  }
+
+  private fun specPatternCacheKey(spec: OnnxInputSpec): String {
+    return "${spec.type}|${spec.elementCount}|${spec.shape.joinToString("x")}"
   }
 
   private fun floatToHalfBits(value: Float): Short {
