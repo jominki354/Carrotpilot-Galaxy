@@ -255,6 +255,10 @@ class RuntimeViewModel(
     modelRuntimeCamera.reset()
   }
 
+  fun getModelInputResolutionHint(): Pair<Int, Int>? {
+    return modelRuntimeCamera.preferredInputResolution()
+  }
+
   fun onRealCameraFrame(timestampMs: Long, frame: ModelInputFrame? = null) {
     modelRuntimeCamera.onCameraFrame(timestampMs, frame)
   }

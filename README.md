@@ -32,6 +32,7 @@ Android 16 / One UI 8 기반 `single-APK` 코어 런타임으로 Carrotpilot/ope
 5. `REAL_CAMERA` 모드:
 - CameraX Y plane을 `ModelInputFrame`으로 추출
 - 입력 스키마(예: `img`, `big_img`) 크기에 맞춰 nearest-neighbor resize 후 채널 축으로 반복 주입
+- openpilot `DT_MDL(20Hz)` 방식과 유사하게 최신 프레임 기준 고정 주기 추론 루프 사용
 
 진행 게이트:
 1. G0 아키텍처 동결
@@ -69,11 +70,11 @@ Real Camera 최신 벤치(2026-03-04, external `driving_vision.onnx`):
 - `bench_verdict=PASS`
 - `t2_verdict=PASS`, `t3_verdict=PASS`
 2. 성능 관측:
-- `t3_2min_model_hz=12.9`, `p95_ms=68.25`, `drop_perc=35.3`
-- `t3_5min_model_hz=12.8`, `p95_ms=69.35`, `drop_perc=35.8`
+- `t3_2min_model_hz=18.4`, `p95_ms=66.66`, `drop_perc=8.0`
+- `t3_5min_model_hz=17.5`, `p95_ms=68.71`, `drop_perc=12.7`
 3. 해석:
 - 기능/복귀/장시간 에러 없는 동작은 확보
-- FPS/지연/드롭은 최적화 단계에서 추가 개선 필요
+- FPS/드롭은 개선됐고, p95 지연은 추가 최적화가 필요
 
 ONNX 호환성 프로브:
 1. `powershell -ExecutionPolicy Bypass -File tools/run_g2_onnx_compat_probe.ps1`

@@ -28,6 +28,7 @@ interface ModelInferenceEngine {
   val backendName: String
   fun initialize(): Boolean
   fun run(frameTimestampMs: Long, inputFrame: ModelInputFrame? = null): ModelInferenceResult
+  fun preferredInputResolution(): Pair<Int, Int>? = null
   fun release() {}
 }
 
@@ -94,6 +95,10 @@ class FallbackInferenceEngine(
     return result
   }
 
+  override fun preferredInputResolution(): Pair<Int, Int>? {
+    return activeEngine.preferredInputResolution()
+  }
+
   override fun release() {
     primary.release()
     fallback.release()
@@ -121,6 +126,7 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
   private var session: OrtSession? = null
   private var environment: OrtEnvironment? = null
   private var inputSpecs: List<OnnxInputSpec> = emptyList()
+  private var preferredResolution: Pair<Int, Int>? = null
   private var initialized = false
 
   protected abstract fun loadModelBytes(): ByteArray?
@@ -130,7 +136,13 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
     return try {
       val modelBytes = loadModelBytes() ?: return false
       val env = OrtEnvironment.getEnvironment()
-      val options = OrtSession.SessionOptions()
+      val options = OrtSession.SessionOptions().apply {
+        runCatching { setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT) }
+        runCatching { setInterOpNumThreads(1) }
+        runCatching { setIntraOpNumThreads(recommendedIntraOpThreads()) }
+        runCatching { setMemoryPatternOptimization(true) }
+        runCatching { setCPUArenaAllocator(true) }
+      }
       val createdSession = env.createSession(modelBytes, options)
 
       val specs = buildInputSpecs(createdSession) ?: run {
@@ -145,6 +157,7 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
       environment = env
       session = createdSession
       inputSpecs = specs
+      preferredResolution = selectPreferredResolution(specs)
       initialized = true
       true
     } catch (t: Throwable) {
@@ -200,7 +213,12 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
     session = null
     environment = null
     inputSpecs = emptyList()
+    preferredResolution = null
     initialized = false
+  }
+
+  override fun preferredInputResolution(): Pair<Int, Int>? {
+    return preferredResolution
   }
 
   private fun buildInputSpecs(session: OrtSession): List<OnnxInputSpec>? {
@@ -224,6 +242,31 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
       )
     }
     return specs.sortedBy { it.name }
+  }
+
+  private fun selectPreferredResolution(specs: List<OnnxInputSpec>): Pair<Int, Int>? {
+    val imageLike = specs
+      .filter { spec ->
+        spec.shape.size >= 2 &&
+          (spec.name.contains("img", ignoreCase = true) || spec.name.contains("image", ignoreCase = true))
+      }
+      .mapNotNull { spec ->
+        val h = spec.shape[spec.shape.size - 2].toInt()
+        val w = spec.shape[spec.shape.size - 1].toInt()
+        if (h > 0 && w > 0) w to h else null
+      }
+      .sortedByDescending { (w, h) -> w * h }
+
+    if (imageLike.isNotEmpty()) {
+      return imageLike.first()
+    }
+
+    return specs.firstNotNullOfOrNull { spec ->
+      if (spec.shape.size < 2) return@firstNotNullOfOrNull null
+      val h = spec.shape[spec.shape.size - 2].toInt()
+      val w = spec.shape[spec.shape.size - 1].toInt()
+      if (h > 0 && w > 0) w to h else null
+    }
   }
 
   private fun isSupportedInputType(type: OnnxJavaType): Boolean {
@@ -420,6 +463,16 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
 
   private fun directShortByteBuffer(size: Int): ByteBuffer {
     return ByteBuffer.allocateDirect(size * Short.SIZE_BYTES).order(ByteOrder.nativeOrder())
+  }
+
+  private fun recommendedIntraOpThreads(): Int {
+    val cores = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
+    return when {
+      cores >= 8 -> 4
+      cores >= 6 -> 3
+      cores >= 4 -> 2
+      else -> 1
+    }
   }
 
   private fun floatToHalfBits(value: Float): Short {

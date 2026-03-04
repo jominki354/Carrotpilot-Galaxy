@@ -63,9 +63,11 @@ class MainActivity : ComponentActivity() {
 
       val startRealCameraSession = {
         vm.startModelRuntimeRealCameraSession(permissionGranted = true)
+        val targetResolution = vm.getModelInputResolutionHint()
         cameraFrameSource.start(
           owner = lifecycleOwner,
           onFrame = vm::onRealCameraFrame,
+          targetResolution = targetResolution,
           onError = { vm.onRealCameraSourceError() },
         )
       }

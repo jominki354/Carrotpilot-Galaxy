@@ -27,11 +27,14 @@ class ModelRuntimeCameraPipeline(
   val state: StateFlow<ModelRuntimeState> = _state.asStateFlow()
 
   private var monitorJob: Job? = null
+  private var inferenceLoopJob: Job? = null
   @Volatile private var startedAtMs: Long = 0L
   @Volatile private var lastModelAtMs: Long = 0L
   @Volatile private var lastPoseAtMs: Long = 0L
   @Volatile private var modelFrameCount: Long = 0L
   @Volatile private var poseSampleCount: Long = 0L
+  @Volatile private var latestInputFrame: ModelInputFrame? = null
+  @Volatile private var latestInputFrameSeq: Long = 0L
   @Volatile private var sessionActive = false
   @Volatile private var inferenceReady: Boolean = false
   @Volatile private var inferenceOutputCount: Long = 0L
@@ -78,6 +81,40 @@ class ModelRuntimeCameraPipeline(
     sessionActive = true
     lastModelAtMs = startedAtMs
     lastPoseAtMs = startedAtMs
+
+    inferenceLoopJob = scope.launch(Dispatchers.Default) {
+      var consumedFrameSeq = 0L
+      var nextRunAtMs = nowMs()
+      while (isActive && sessionActive) {
+        val now = nowMs()
+        val waitMs = nextRunAtMs - now
+        if (waitMs > 0L) {
+          delay(waitMs)
+          continue
+        }
+        nextRunAtMs += policy.modelIntervalMs
+        if (now - nextRunAtMs > policy.modelIntervalMs * 4) {
+          nextRunAtMs = now + policy.modelIntervalMs
+        }
+        if (!inferenceReady) {
+          continue
+        }
+
+        val latestSeq = latestInputFrameSeq
+        if (latestSeq == 0L || latestSeq == consumedFrameSeq) {
+          continue
+        }
+        val frame = latestInputFrame ?: continue
+        consumedFrameSeq = latestSeq
+
+        val observedAtMs = nowMs()
+        modelFrameCount += 1
+        poseSampleCount += 1
+        lastModelAtMs = observedAtMs
+        lastPoseAtMs = observedAtMs
+        applyInferenceResult(inferenceEngine.run(observedAtMs, frame))
+      }
+    }
 
     monitorJob = scope.launch(Dispatchers.Default) {
       while (isActive && sessionActive) {
@@ -133,15 +170,11 @@ class ModelRuntimeCameraPipeline(
   }
 
   fun onCameraFrame(timestampMs: Long = nowMs(), inputFrame: ModelInputFrame? = null) {
+    timestampMs
     if (!sessionActive) return
-    val observedAtMs = nowMs()
-    modelFrameCount += 1
-    poseSampleCount += 1
-    // Keep timeout clock-domain consistent with monitor's nowMs().
-    lastModelAtMs = observedAtMs
-    lastPoseAtMs = observedAtMs
-    if (inferenceReady) {
-      applyInferenceResult(inferenceEngine.run(observedAtMs, inputFrame))
+    if (inputFrame != null) {
+      latestInputFrame = inputFrame
+      latestInputFrameSeq += 1
     }
   }
 
@@ -165,6 +198,8 @@ class ModelRuntimeCameraPipeline(
     sessionActive = false
     monitorJob?.cancel()
     monitorJob = null
+    inferenceLoopJob?.cancel()
+    inferenceLoopJob = null
     resetCounters()
     _state.value = ModelRuntimeState(
       stage = ModelRuntimeStage.ERROR,
@@ -187,6 +222,8 @@ class ModelRuntimeCameraPipeline(
     sessionActive = false
     monitorJob?.cancel()
     monitorJob = null
+    inferenceLoopJob?.cancel()
+    inferenceLoopJob = null
     _state.value = _state.value.copy(
       stage = ModelRuntimeStage.STOPPED,
       error = ModelRuntimeErrorCode.NONE,
@@ -198,6 +235,10 @@ class ModelRuntimeCameraPipeline(
     resetCounters()
     inferenceEngine.release()
     _state.value = initialState()
+  }
+
+  fun preferredInputResolution(): Pair<Int, Int>? {
+    return inferenceEngine.preferredInputResolution()
   }
 
   private fun initialState(): ModelRuntimeState {
@@ -239,6 +280,8 @@ class ModelRuntimeCameraPipeline(
     lastPoseAtMs = 0L
     modelFrameCount = 0L
     poseSampleCount = 0L
+    latestInputFrame = null
+    latestInputFrameSeq = 0L
     inferenceReady = false
     inferenceOutputCount = 0L
     inferenceFailureCount = 0L

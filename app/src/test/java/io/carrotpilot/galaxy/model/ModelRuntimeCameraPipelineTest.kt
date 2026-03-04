@@ -69,8 +69,9 @@ class ModelRuntimeCameraPipelineTest {
     val pipeline = ModelRuntimeCameraPipeline(scope = scope)
 
     pipeline.startSession(permissionGranted = true)
+    val frame = sampleFrame()
     repeat(20) {
-      pipeline.onCameraFrame()
+      pipeline.onCameraFrame(inputFrame = frame)
       delay(20L)
     }
     delay(300L)
@@ -95,8 +96,9 @@ class ModelRuntimeCameraPipelineTest {
     val pipeline = ModelRuntimeCameraPipeline(scope = scope)
 
     pipeline.startSession(permissionGranted = true)
+    val frame = sampleFrame()
     repeat(20) {
-      pipeline.onCameraFrame()
+      pipeline.onCameraFrame(inputFrame = frame)
       delay(20L)
     }
 
@@ -120,9 +122,10 @@ class ModelRuntimeCameraPipelineTest {
     val pipeline = ModelRuntimeCameraPipeline(scope = scope)
 
     pipeline.startSession(permissionGranted = true)
+    val frame = sampleFrame()
     repeat(50) {
       // Simulate callback providing a timestamp from another time domain.
-      pipeline.onCameraFrame(timestampMs = 123L)
+      pipeline.onCameraFrame(timestampMs = 123L, inputFrame = frame)
       delay(20L)
     }
 
@@ -172,6 +175,11 @@ class ModelRuntimeCameraPipelineTest {
       height = 4,
     )
     pipeline.onCameraFrame(inputFrame = frame)
+    var attempts = 0
+    while (attempts < 20 && engine.lastFrame.get() == null) {
+      delay(20L)
+      attempts += 1
+    }
 
     val captured = engine.lastFrame.get()
     assertTrue(captured != null)
@@ -181,5 +189,13 @@ class ModelRuntimeCameraPipelineTest {
 
     pipeline.stopSession()
     scope.cancel()
+  }
+
+  private fun sampleFrame(): ModelInputFrame {
+    return ModelInputFrame(
+      lumaBytes = ByteArray(16) { index -> index.toByte() },
+      width = 4,
+      height = 4,
+    )
   }
 }

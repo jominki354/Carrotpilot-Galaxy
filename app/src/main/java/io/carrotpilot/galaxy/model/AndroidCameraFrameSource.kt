@@ -2,6 +2,7 @@ package io.carrotpilot.galaxy.model
 
 import android.content.Context
 import android.os.SystemClock
+import android.util.Size
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -22,6 +23,7 @@ class AndroidCameraFrameSource(
   fun start(
     owner: LifecycleOwner,
     onFrame: (Long, ModelInputFrame) -> Unit,
+    targetResolution: Pair<Int, Int>? = null,
     onError: (String) -> Unit,
   ) {
     val providerFuture = ProcessCameraProvider.getInstance(appContext)
@@ -36,8 +38,17 @@ class AndroidCameraFrameSource(
 
         runCatching { provider.unbindAll() }
 
-        val analysis = ImageAnalysis.Builder()
+        val analysisBuilder = ImageAnalysis.Builder()
           .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+
+        if (targetResolution != null) {
+          val (targetWidth, targetHeight) = targetResolution
+          if (targetWidth > 0 && targetHeight > 0) {
+            analysisBuilder.setTargetResolution(Size(targetWidth, targetHeight))
+          }
+        }
+
+        val analysis = analysisBuilder
           .build()
           .also { useCase ->
             useCase.setAnalyzer(cameraExecutor) { image ->
@@ -79,15 +90,30 @@ class AndroidCameraFrameSource(
     val pixels = ByteArray(width * height)
     val baseOffset = source.position()
 
-    for (y in 0 until height) {
-      for (x in 0 until width) {
-        val sourceIndex = baseOffset + y * rowStride + x * pixelStride
-        val value = if (sourceIndex in 0 until sourceLimit) {
-          source.get(sourceIndex)
-        } else {
-          0
+    val duplicate = source.duplicate()
+    if (pixelStride == 1 && rowStride == width && baseOffset + pixels.size <= sourceLimit) {
+      duplicate.position(baseOffset)
+      duplicate.get(pixels, 0, pixels.size)
+    } else if (pixelStride == 1) {
+      for (y in 0 until height) {
+        val sourceIndex = baseOffset + y * rowStride
+        if (sourceIndex in 0 until sourceLimit) {
+          val readable = minOf(width, sourceLimit - sourceIndex)
+          duplicate.position(sourceIndex)
+          duplicate.get(pixels, y * width, readable)
         }
-        pixels[y * width + x] = value
+      }
+    } else {
+      for (y in 0 until height) {
+        for (x in 0 until width) {
+          val sourceIndex = baseOffset + y * rowStride + x * pixelStride
+          val value = if (sourceIndex in 0 until sourceLimit) {
+            source.get(sourceIndex)
+          } else {
+            0
+          }
+          pixels[y * width + x] = value
+        }
       }
     }
 
