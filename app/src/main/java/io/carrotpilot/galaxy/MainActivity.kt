@@ -54,6 +54,8 @@ class MainActivity : ComponentActivity() {
       val modelScenario by vm.modelScenario.collectAsStateWithLifecycle()
       val modelSuiteRunning by vm.modelSuiteRunning.collectAsStateWithLifecycle()
       val modelSuiteReport by vm.modelSuiteReport.collectAsStateWithLifecycle()
+      val drivingCoreState by vm.drivingCoreState.collectAsStateWithLifecycle()
+      val drivingEnableRequested by vm.drivingEnableRequested.collectAsStateWithLifecycle()
       val lifecycleOwner = LocalLifecycleOwner.current
       val context = LocalContext.current
       val cameraFrameSource = remember { AndroidCameraFrameSource(context.applicationContext) }
@@ -235,6 +237,15 @@ class MainActivity : ComponentActivity() {
                 vm.runModelSuite()
               }
 
+              "START_G3" ->
+                vm.startDrivingCore()
+
+              "STOP_G3" ->
+                vm.stopDrivingCore()
+
+              "RESET_G3" ->
+                vm.resetDrivingCore()
+
               "INJECT_FRAME" ->
                 vm.onRealCameraFrame(
                   timestampMs = SystemClock.elapsedRealtime(),
@@ -267,6 +278,8 @@ class MainActivity : ComponentActivity() {
         fakeSuiteRunning = fakeSuiteRunning,
         fakeSuiteReport = fakeSuiteReport,
         modelRuntimeState = modelRuntimeState,
+        drivingCoreState = drivingCoreState,
+        drivingEnableRequested = drivingEnableRequested,
         modelSourceMode = modelSourceMode,
         modelScenario = modelScenario,
         modelSuiteRunning = modelSuiteRunning,
@@ -281,6 +294,9 @@ class MainActivity : ComponentActivity() {
         onStopModelRuntime = stopModelRuntime,
         onResetModelRuntime = resetModelRuntime,
         onRunModelSuite = runModelSuite,
+        onStartDrivingCore = vm::startDrivingCore,
+        onStopDrivingCore = vm::stopDrivingCore,
+        onResetDrivingCore = vm::resetDrivingCore,
         onStart = vm::startVehicleRecognition,
         onStop = vm::stopVehicleRecognition,
         onReset = vm::resetState,

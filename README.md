@@ -62,8 +62,12 @@ Android 16 / One UI 8 기반 `single-APK` 코어 런타임으로 Carrotpilot/ope
 3. 요약 라벨:
 - `BENCH-SUMMARY`
 - `bench_verdict` (기능 합격: stage/error/failure 기준)
+- `t3_health_verdict`, `t3_perf_verdict`
+- `bench_threshold_model_hz_min`, `bench_threshold_drop_max`, `bench_threshold_p95_ms_max`
 - `t3_2min_model_hz`, `t3_2min_p95_ms`, `t3_2min_drop_perc`
 - `t3_5min_model_hz`, `t3_5min_p95_ms`, `t3_5min_drop_perc`
+4. 임계치 커스텀 예시:
+- `powershell -ExecutionPolicy Bypass -File tools/run_g2_real_camera_auto.ps1 -MinModelHz 18 -MaxFrameDropPerc 15 -MaxP95Ms 65`
 
 Real Camera 최신 벤치(2026-03-04, external `driving_vision.onnx`):
 1. 기능 안정성:
@@ -75,6 +79,15 @@ Real Camera 최신 벤치(2026-03-04, external `driving_vision.onnx`):
 3. 해석:
 - 기능/복귀/장시간 에러 없는 동작은 확보
 - FPS/드롭은 개선됐고, p95 지연은 추가 최적화가 필요
+
+현재 G3 상태(2026-03-04):
+1. state machine 최소 루프 추가 (`DISABLED/PRE_ENABLED/ENABLED/SOFT_DISABLING/OVERRIDING`)
+2. planner(20Hz) / control(100Hz) tick 카운터/Hz 계측 추가
+3. 디버그 출력:
+- `g3_enable_requested`
+- `g3_stage`, `g3_error`
+- `g3_lat_active`, `g3_long_active`, `g3_sendcan_allowed`
+- `g3_planner_hz`, `g3_control_hz`, `g3_planner_ticks`, `g3_control_ticks`
 
 ONNX 호환성 프로브:
 1. `powershell -ExecutionPolicy Bypass -File tools/run_g2_onnx_compat_probe.ps1`

@@ -3,6 +3,9 @@ package io.carrotpilot.galaxy.runtime
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import io.carrotpilot.galaxy.driving.DrivingCoreInputSnapshot
+import io.carrotpilot.galaxy.driving.DrivingCorePipeline
+import io.carrotpilot.galaxy.driving.DrivingCoreState
 import io.carrotpilot.galaxy.model.ModelRuntimeCameraPipeline
 import io.carrotpilot.galaxy.model.ModelRuntimeErrorCode
 import io.carrotpilot.galaxy.model.ModelRuntimeMockPipeline
@@ -101,9 +104,18 @@ class RuntimeViewModel(
   private val _modelSuiteReport = MutableStateFlow<List<String>>(emptyList())
   val modelSuiteReport: StateFlow<List<String>> = _modelSuiteReport.asStateFlow()
 
+  private val drivingCore = DrivingCorePipeline(scope = viewModelScope)
+  private var drivingStateCollectorJob: Job? = null
+  private val _drivingEnableRequested = MutableStateFlow(false)
+  val drivingEnableRequested: StateFlow<Boolean> = _drivingEnableRequested.asStateFlow()
+  private val _drivingCoreState = MutableStateFlow(drivingCore.state.value)
+  val drivingCoreState: StateFlow<DrivingCoreState> = _drivingCoreState.asStateFlow()
+
   init {
     attachStateCollector(runtimeCoordinator)
     attachModelStateCollector(_modelSourceMode.value)
+    attachDrivingStateCollector()
+    drivingCore.updateInputs(buildDrivingInputSnapshot())
   }
 
   fun startVehicleRecognition() {
@@ -259,6 +271,29 @@ class RuntimeViewModel(
     return modelRuntimeCamera.preferredInputResolution()
   }
 
+  fun startDrivingCore() {
+    viewModelScope.launch {
+      _drivingEnableRequested.value = true
+      drivingCore.updateInputs(buildDrivingInputSnapshot())
+      drivingCore.start()
+    }
+  }
+
+  fun stopDrivingCore() {
+    viewModelScope.launch {
+      _drivingEnableRequested.value = false
+      drivingCore.updateInputs(buildDrivingInputSnapshot())
+      drivingCore.stop()
+    }
+  }
+
+  fun resetDrivingCore() {
+    _drivingEnableRequested.value = false
+    drivingCore.reset()
+    _drivingCoreState.value = drivingCore.state.value
+    drivingCore.updateInputs(buildDrivingInputSnapshot())
+  }
+
   fun onRealCameraFrame(timestampMs: Long, frame: ModelInputFrame? = null) {
     modelRuntimeCamera.onCameraFrame(timestampMs, frame)
   }
@@ -301,6 +336,7 @@ class RuntimeViewModel(
     stateCollectorJob = viewModelScope.launch {
       coordinator.state.collect { state ->
         _vehicleState.value = state
+        drivingCore.updateInputs(buildDrivingInputSnapshot())
       }
     }
   }
@@ -314,6 +350,16 @@ class RuntimeViewModel(
       }
       source.collect { state ->
         _modelRuntimeState.value = state
+        drivingCore.updateInputs(buildDrivingInputSnapshot())
+      }
+    }
+  }
+
+  private fun attachDrivingStateCollector() {
+    drivingStateCollectorJob?.cancel()
+    drivingStateCollectorJob = viewModelScope.launch {
+      drivingCore.state.collect { state ->
+        _drivingCoreState.value = state
       }
     }
   }
@@ -445,9 +491,55 @@ class RuntimeViewModel(
     return "[$status] $scenario -> ${state.stage}/${state.error}/modelHz=$modelHzText/poseHz=$poseHzText"
   }
 
+  private fun buildDrivingInputSnapshot(): DrivingCoreInputSnapshot {
+    val vehicleState = _vehicleState.value
+    val modelState = _modelRuntimeState.value
+    val carRecognized = vehicleState.identifiedCarFingerprint != null
+    val carParamsValid = vehicleState.carParams != null
+    val safetyReady =
+      vehicleState.stage == VehicleStage.SAFETY_READY &&
+        vehicleState.error == VehicleErrorCode.NONE
+    val vehicleFresh =
+      vehicleState.error == VehicleErrorCode.NONE &&
+        vehicleState.stage != VehicleStage.DISCONNECTED
+    val modelFresh =
+      modelState.error == ModelRuntimeErrorCode.NONE &&
+        (
+          modelState.stage == ModelRuntimeStage.MODEL_STREAMING ||
+            modelState.stage == ModelRuntimeStage.LOCATION_STREAMING ||
+            modelState.stage == ModelRuntimeStage.STABLE
+          )
+    val noEntry = !(carRecognized && carParamsValid && safetyReady && modelFresh && vehicleFresh)
+    val immediateDisable =
+      vehicleState.error == VehicleErrorCode.PANDA_CONNECT_FAIL ||
+        vehicleState.error == VehicleErrorCode.CAN_TIMEOUT ||
+        modelState.error == ModelRuntimeErrorCode.CAMERA_PERMISSION_DENIED
+    val softDisable =
+      modelState.error == ModelRuntimeErrorCode.MODEL_TIMEOUT ||
+        modelState.error == ModelRuntimeErrorCode.POSE_TIMEOUT
+
+    return DrivingCoreInputSnapshot(
+      enableRequested = _drivingEnableRequested.value,
+      preEnable = false,
+      noEntry = noEntry,
+      userDisable = false,
+      immediateDisable = immediateDisable,
+      softDisable = softDisable,
+      overrideLateral = false,
+      overrideLongitudinal = false,
+      carRecognized = carRecognized,
+      carParamsValid = carParamsValid,
+      safetyReady = safetyReady,
+      modelFresh = modelFresh,
+      vehicleFresh = vehicleFresh,
+      calibrationValid = true,
+    )
+  }
+
   fun buildDebugSnapshotText(): String {
     val state = _vehicleState.value
     val modelRuntimeState = _modelRuntimeState.value
+    val drivingCoreState = _drivingCoreState.value
     val candidatePreview = state.candidateCars.sorted().take(8).joinToString(", ")
     val suiteText = if (_fakeSuiteReport.value.isEmpty()) "-" else _fakeSuiteReport.value.joinToString("\n")
     val modelSuiteText = if (_modelSuiteReport.value.isEmpty()) "-" else _modelSuiteReport.value.joinToString("\n")
@@ -487,9 +579,24 @@ class RuntimeViewModel(
       appendLine("g2_inference_latency_ms_p95=${String.format("%.2f", modelRuntimeState.inferenceLatencyMsP95)}")
       appendLine("g2_inference_failures=${modelRuntimeState.inferenceFailures}")
       appendLine("g2_inference_last_failure=${modelRuntimeState.inferenceLastFailure}")
+      appendLine("g3_enable_requested=${_drivingEnableRequested.value}")
+      appendLine("g3_stage=${drivingCoreState.stage}")
+      appendLine("g3_error=${drivingCoreState.error}")
+      appendLine("g3_lat_active=${drivingCoreState.latActive}")
+      appendLine("g3_long_active=${drivingCoreState.longActive}")
+      appendLine("g3_sendcan_allowed=${drivingCoreState.sendcanAllowed}")
+      appendLine("g3_planner_hz=${String.format("%.1f", drivingCoreState.plannerHz)}")
+      appendLine("g3_control_hz=${String.format("%.1f", drivingCoreState.controlHz)}")
+      appendLine("g3_planner_ticks=${drivingCoreState.plannerTicks}")
+      appendLine("g3_control_ticks=${drivingCoreState.controlTicks}")
       appendLine("model_suite_report:")
       appendLine(modelSuiteText)
     }
+  }
+
+  override fun onCleared() {
+    super.onCleared()
+    drivingCore.reset()
   }
 
   private fun createCoordinator(

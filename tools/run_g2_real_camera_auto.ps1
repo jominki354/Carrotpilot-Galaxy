@@ -2,7 +2,10 @@ param(
   [string]$Package = "io.carrotpilot.galaxy",
   [int]$ResumeBackgroundSeconds = 5,
   [int]$T3FirstWindowSeconds = 120,
-  [int]$T3SecondWindowSeconds = 180
+  [int]$T3SecondWindowSeconds = 180,
+  [double]$MinModelHz = 17.0,
+  [double]$MaxFrameDropPerc = 20.0,
+  [double]$MaxP95Ms = 70.0
 )
 
 $ErrorActionPreference = "Stop"
@@ -59,6 +62,61 @@ function Test-SnapshotHealthy {
   )
 }
 
+function Parse-DoubleSafe {
+  param([string]$Text)
+  $parsed = 0.0
+  if ([double]::TryParse($Text, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$parsed)) {
+    return $parsed
+  }
+  return [double]::NaN
+}
+
+function Test-SnapshotPerf {
+  param([hashtable]$Map)
+  $hz = Parse-DoubleSafe -Text $Map["g2_model_hz"]
+  $drop = Parse-DoubleSafe -Text $Map["g2_frame_drop_perc"]
+  $p95 = Parse-DoubleSafe -Text $Map["g2_inference_latency_ms_p95"]
+
+  if ([double]::IsNaN($hz) -or [double]::IsNaN($drop) -or [double]::IsNaN($p95)) {
+    return $false
+  }
+
+  return ($hz -ge $MinModelHz) -and ($drop -le $MaxFrameDropPerc) -and ($p95 -le $MaxP95Ms)
+}
+
+function Wait-ForFieldValue {
+  param(
+    [string]$Key,
+    [string]$Expected,
+    [int]$TimeoutSeconds = 12
+  )
+  $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+  do {
+    $lines = Get-AutoSnapshot
+    $map = ConvertTo-SnapshotMap -Lines $lines
+    if ($map.ContainsKey($Key) -and $map[$Key] -eq $Expected) {
+      return $true
+    }
+    Start-Sleep -Seconds 1
+  } while ([DateTime]::UtcNow -lt $deadline)
+  return $false
+}
+
+function Wait-ForHealthySnapshot {
+  param([int]$TimeoutSeconds = 15)
+  $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+  $lastLines = @()
+  do {
+    $lastLines = Get-AutoSnapshot
+    $map = ConvertTo-SnapshotMap -Lines $lastLines
+    if (Test-SnapshotHealthy -Map $map) {
+      return $lastLines
+    }
+    Start-Sleep -Seconds 1
+  } while ([DateTime]::UtcNow -lt $deadline)
+  return $lastLines
+}
+
 function Print-BenchmarkSummary {
   param(
     [hashtable]$T2Running,
@@ -67,7 +125,9 @@ function Print-BenchmarkSummary {
     [hashtable]$T3Second
   )
   $t2Pass = (Test-SnapshotHealthy -Map $T2Running) -and (Test-SnapshotHealthy -Map $T2AfterResume)
-  $t3Pass = (Test-SnapshotHealthy -Map $T3First) -and (Test-SnapshotHealthy -Map $T3Second)
+  $t3HealthPass = (Test-SnapshotHealthy -Map $T3First) -and (Test-SnapshotHealthy -Map $T3Second)
+  $t3PerfPass = (Test-SnapshotPerf -Map $T3First) -and (Test-SnapshotPerf -Map $T3Second)
+  $t3Pass = $t3HealthPass -and $t3PerfPass
   $overall = if ($t2Pass -and $t3Pass) { "PASS" } else { "FAIL" }
 
   Write-Host ""
@@ -75,6 +135,11 @@ function Print-BenchmarkSummary {
   Write-Host "bench_verdict=$overall"
   Write-Host "t2_verdict=$(if ($t2Pass) { "PASS" } else { "FAIL" })"
   Write-Host "t3_verdict=$(if ($t3Pass) { "PASS" } else { "FAIL" })"
+  Write-Host "t3_health_verdict=$(if ($t3HealthPass) { "PASS" } else { "FAIL" })"
+  Write-Host "t3_perf_verdict=$(if ($t3PerfPass) { "PASS" } else { "FAIL" })"
+  Write-Host "bench_threshold_model_hz_min=$MinModelHz"
+  Write-Host "bench_threshold_drop_max=$MaxFrameDropPerc"
+  Write-Host "bench_threshold_p95_ms_max=$MaxP95Ms"
   Write-Host "t3_2min_model_hz=$($T3First["g2_model_hz"])"
   Write-Host "t3_2min_p95_ms=$($T3First["g2_inference_latency_ms_p95"])"
   Write-Host "t3_2min_drop_perc=$($T3First["g2_frame_drop_perc"])"
@@ -111,21 +176,21 @@ try {
   Start-Sleep -Seconds 2
 
   Send-AutoCommand -Command "MODEL_SOURCE_REAL_CAMERA"
-  Start-Sleep -Seconds 1
+  if (-not (Wait-ForFieldValue -Key "model_source_mode" -Expected "REAL_CAMERA")) {
+    throw "MODEL_SOURCE_REAL_CAMERA not reflected in debug snapshot within timeout."
+  }
   Send-AutoCommand -Command "RESET_G2"
   Start-Sleep -Seconds 1
   Send-AutoCommand -Command "START_G2"
-  Start-Sleep -Seconds 3
 
-  $t2Running = Get-AutoSnapshot
+  $t2Running = Wait-ForHealthySnapshot
   Print-Snapshot -Label "T2-RUNNING" -Lines $t2Running
 
   adb shell input keyevent 3 | Out-Null
   Start-Sleep -Seconds $ResumeBackgroundSeconds
   adb shell am start -n "$Package/.MainActivity" | Out-Null
-  Start-Sleep -Seconds 3
 
-  $t2AfterResume = Get-AutoSnapshot
+  $t2AfterResume = Wait-ForHealthySnapshot
   Print-Snapshot -Label "T2-AFTER-RESUME" -Lines $t2AfterResume
 
   Send-AutoCommand -Command "STOP_G2"
@@ -134,7 +199,9 @@ try {
   Print-Snapshot -Label "T2-STOPPED" -Lines $t2Stopped
 
   Send-AutoCommand -Command "MODEL_SOURCE_REAL_CAMERA"
-  Start-Sleep -Seconds 1
+  if (-not (Wait-ForFieldValue -Key "model_source_mode" -Expected "REAL_CAMERA")) {
+    throw "MODEL_SOURCE_REAL_CAMERA not reflected in debug snapshot before T3."
+  }
   Send-AutoCommand -Command "RESET_G2"
   Start-Sleep -Seconds 1
   Send-AutoCommand -Command "START_G2"

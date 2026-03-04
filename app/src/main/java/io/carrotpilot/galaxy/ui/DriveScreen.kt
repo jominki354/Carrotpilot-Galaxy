@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import io.carrotpilot.galaxy.driving.DrivingCoreState
 import io.carrotpilot.galaxy.model.ModelRuntimeMockScenario
 import io.carrotpilot.galaxy.model.ModelRuntimeSourceMode
 import io.carrotpilot.galaxy.model.ModelRuntimeState
@@ -42,6 +43,8 @@ fun DriveScreen(
   fakeSuiteRunning: Boolean,
   fakeSuiteReport: List<String>,
   modelRuntimeState: ModelRuntimeState,
+  drivingCoreState: DrivingCoreState,
+  drivingEnableRequested: Boolean,
   modelSourceMode: ModelRuntimeSourceMode,
   modelScenario: ModelRuntimeMockScenario,
   modelSuiteRunning: Boolean,
@@ -56,6 +59,9 @@ fun DriveScreen(
   onStopModelRuntime: () -> Unit,
   onResetModelRuntime: () -> Unit,
   onRunModelSuite: () -> Unit,
+  onStartDrivingCore: () -> Unit,
+  onStopDrivingCore: () -> Unit,
+  onResetDrivingCore: () -> Unit,
   onStart: () -> Unit,
   onStop: () -> Unit,
   onReset: () -> Unit,
@@ -103,6 +109,16 @@ fun DriveScreen(
       appendLine("g2_inference_latency_ms_p95=${String.format("%.2f", modelRuntimeState.inferenceLatencyMsP95)}")
       appendLine("g2_inference_failures=${modelRuntimeState.inferenceFailures}")
       appendLine("g2_inference_last_failure=${modelRuntimeState.inferenceLastFailure}")
+      appendLine("g3_enable_requested=$drivingEnableRequested")
+      appendLine("g3_stage=${drivingCoreState.stage}")
+      appendLine("g3_error=${drivingCoreState.error}")
+      appendLine("g3_lat_active=${drivingCoreState.latActive}")
+      appendLine("g3_long_active=${drivingCoreState.longActive}")
+      appendLine("g3_sendcan_allowed=${drivingCoreState.sendcanAllowed}")
+      appendLine("g3_planner_hz=${String.format("%.1f", drivingCoreState.plannerHz)}")
+      appendLine("g3_control_hz=${String.format("%.1f", drivingCoreState.controlHz)}")
+      appendLine("g3_planner_ticks=${drivingCoreState.plannerTicks}")
+      appendLine("g3_control_ticks=${drivingCoreState.controlTicks}")
       appendLine("model_suite_report:")
       appendLine(modelSuiteText)
     }
@@ -342,6 +358,31 @@ fun DriveScreen(
         Text(text = "G2 inferenceLatencyP95(ms): ${String.format("%.2f", modelRuntimeState.inferenceLatencyMsP95)}")
         Text(text = "G2 inferenceFailures: ${modelRuntimeState.inferenceFailures}")
         Text(text = "G2 inferenceLastFailure: ${modelRuntimeState.inferenceLastFailure}")
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = "G3 Driving Core", style = MaterialTheme.typography.titleMedium)
+        Text(text = "G3 enableRequested: $drivingEnableRequested")
+        Row(modifier = Modifier.fillMaxWidth()) {
+          Button(onClick = onStartDrivingCore) {
+            Text("Start G3")
+          }
+          Spacer(modifier = Modifier.width(8.dp))
+          Button(onClick = onStopDrivingCore) {
+            Text("Stop G3")
+          }
+          Spacer(modifier = Modifier.width(8.dp))
+          Button(onClick = onResetDrivingCore) {
+            Text("Reset G3")
+          }
+        }
+        Text(text = "G3 stage: ${drivingCoreState.stage}")
+        Text(text = "G3 error: ${drivingCoreState.error}")
+        Text(text = "G3 latActive: ${drivingCoreState.latActive}")
+        Text(text = "G3 longActive: ${drivingCoreState.longActive}")
+        Text(text = "G3 sendcanAllowed: ${drivingCoreState.sendcanAllowed}")
+        Text(text = "G3 plannerHz: ${String.format("%.1f", drivingCoreState.plannerHz)}")
+        Text(text = "G3 controlHz: ${String.format("%.1f", drivingCoreState.controlHz)}")
+        Text(text = "G3 plannerTicks: ${drivingCoreState.plannerTicks}")
+        Text(text = "G3 controlTicks: ${drivingCoreState.controlTicks}")
         Spacer(modifier = Modifier.height(12.dp))
       }
 
