@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
@@ -49,6 +50,7 @@ fun DriveScreen(
   modelScenario: ModelRuntimeMockScenario,
   modelSuiteRunning: Boolean,
   modelSuiteReport: List<String>,
+  deviceBatteryTempC: Double?,
   state: VehicleRecognitionState,
   onSelectSourceMode: (RuntimeSourceMode) -> Unit,
   onSelectFakeScenario: (FakeScenario) -> Unit,
@@ -70,12 +72,27 @@ fun DriveScreen(
   var showAdvancedModelControls by remember { mutableStateOf(false) }
   val scrollState = rememberScrollState()
   val clipboardManager = LocalClipboardManager.current
+  val temperatureColor = when {
+    deviceBatteryTempC == null -> MaterialTheme.colorScheme.onSurfaceVariant
+    deviceBatteryTempC < 37.0 -> Color(0xFF2E7D32)
+    deviceBatteryTempC < 41.0 -> Color(0xFFF9A825)
+    else -> Color(0xFFC62828)
+  }
+  val temperatureBand = when {
+    deviceBatteryTempC == null -> "UNKNOWN"
+    deviceBatteryTempC < 37.0 -> "COOL"
+    deviceBatteryTempC < 41.0 -> "WARM"
+    else -> "HOT"
+  }
+  val temperatureText = deviceBatteryTempC?.let { String.format("%.1f", it) } ?: "-"
   val copyDebugText = {
     val candidatePreview = state.candidateCars.sorted().take(8).joinToString(", ")
     val suiteText = if (fakeSuiteReport.isEmpty()) "-" else fakeSuiteReport.joinToString("\n")
     val modelSuiteText = if (modelSuiteReport.isEmpty()) "-" else modelSuiteReport.joinToString("\n")
     val payload = buildString {
       appendLine("source_mode=$sourceMode")
+      appendLine("device_battery_temp_c=$temperatureText")
+      appendLine("device_temp_band=$temperatureBand")
       appendLine("fake_scenario=$fakeScenario")
       appendLine("fake_suite_status=${if (fakeSuiteRunning) "RUNNING" else "IDLE"}")
       appendLine("g1_stage=${state.stage}")
@@ -392,6 +409,26 @@ fun DriveScreen(
           .statusBarsPadding()
           .padding(12.dp),
       ) {
+        Column(horizontalAlignment = Alignment.End) {
+          Text(
+            text = "Temp: ${temperatureText}C ($temperatureBand)",
+            color = temperatureColor,
+            style = MaterialTheme.typography.titleSmall,
+          )
+          Text(
+            text = "Hz ${String.format("%.1f", modelRuntimeState.modelHz)}",
+            style = MaterialTheme.typography.bodySmall,
+          )
+          Text(
+            text = "P95 ${String.format("%.1f", modelRuntimeState.inferenceLatencyMsP95)} ms",
+            style = MaterialTheme.typography.bodySmall,
+          )
+          Text(
+            text = "Drop ${String.format("%.1f", modelRuntimeState.frameDropPerc)}%",
+            style = MaterialTheme.typography.bodySmall,
+          )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
         Button(onClick = copyDebugText) {
           Text("Copy Debug Text")
         }

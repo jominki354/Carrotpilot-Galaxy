@@ -5,12 +5,14 @@ import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.os.BatteryManager
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
@@ -31,6 +33,7 @@ import io.carrotpilot.galaxy.model.ModelRuntimeSourceMode
 import io.carrotpilot.galaxy.model.ModelRuntimeStage
 import io.carrotpilot.galaxy.runtime.RuntimeViewModel
 import io.carrotpilot.galaxy.ui.DriveScreen
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
   private companion object {
@@ -60,8 +63,22 @@ class MainActivity : ComponentActivity() {
       val context = LocalContext.current
       val cameraFrameSource = remember { AndroidCameraFrameSource(context.applicationContext) }
       var resumeRealCameraOnForeground by remember { mutableStateOf(false) }
+      var batteryTempC by remember { mutableStateOf<Double?>(null) }
       val latestModelSourceMode by rememberUpdatedState(modelSourceMode)
       val latestModelStage by rememberUpdatedState(modelRuntimeState.stage)
+
+      LaunchedEffect(context) {
+        while (true) {
+          val batteryIntent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+          val tempDeciC = batteryIntent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
+          batteryTempC = if (tempDeciC == null || tempDeciC == Int.MIN_VALUE || tempDeciC <= 0) {
+            null
+          } else {
+            tempDeciC / 10.0
+          }
+          delay(1_000L)
+        }
+      }
 
       val startRealCameraSession = {
         vm.startModelRuntimeRealCameraSession(permissionGranted = true)
@@ -284,6 +301,7 @@ class MainActivity : ComponentActivity() {
         modelScenario = modelScenario,
         modelSuiteRunning = modelSuiteRunning,
         modelSuiteReport = modelSuiteReport,
+        deviceBatteryTempC = batteryTempC,
         state = state,
         onSelectSourceMode = vm::selectSourceMode,
         onSelectFakeScenario = vm::selectFakeScenario,
