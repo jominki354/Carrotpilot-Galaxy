@@ -42,12 +42,18 @@ Send-AutoCommand -Command "RESET_G2"
 Start-Sleep -Seconds 1
 Send-AutoCommand -Command "START_G2"
 Start-Sleep -Seconds $WarmupSeconds
+Send-AutoCommand -Command "INJECT_FRAME"
+Start-Sleep -Seconds 1
+Send-AutoCommand -Command "INJECT_FRAME"
+Start-Sleep -Seconds 1
 
 $snapshot = Get-Snapshot
 Send-AutoCommand -Command "STOP_G2"
 
 $backend = $snapshot["g2_inference_backend"]
 $ready = $snapshot["g2_inference_ready"]
+$outputsText = if ($snapshot.ContainsKey("g2_inference_outputs")) { $snapshot["g2_inference_outputs"] } else { "0" }
+$outputs = [long]$outputsText
 $failuresText = if ($snapshot.ContainsKey("g2_inference_failures")) { $snapshot["g2_inference_failures"] } else { "0" }
 $failures = [long]$failuresText
 $lastFailure = if ($snapshot.ContainsKey("g2_inference_last_failure")) { $snapshot["g2_inference_last_failure"] } else { "-" }
@@ -57,23 +63,24 @@ $p95 = $snapshot["g2_inference_latency_ms_p95"]
 
 Write-Host "backend=$backend"
 Write-Host "ready=$ready"
+Write-Host "outputs=$outputs"
 Write-Host "failures=$failures"
 Write-Host "stage=$stage"
 Write-Host "error=$g2Error"
 Write-Host "p95_ms=$p95"
 Write-Host "last_failure=$lastFailure"
 
-if ($backend -eq "ONNX_RUNTIME_ANDROID[file:models/comma_model.onnx]" -and $ready -eq "true" -and $failures -eq 0) {
+if ($backend -eq "ONNX_RUNTIME_ANDROID[file:models/comma_model.onnx]" -and $ready -eq "true" -and $failures -eq 0 -and $outputs -gt 0) {
   Write-Host "compat_verdict=PASS_COMMA_ORT_EXTERNAL"
   exit 0
 }
 
-if ($backend -eq "ONNX_RUNTIME_ANDROID[models/comma_model.onnx]" -and $ready -eq "true" -and $failures -eq 0) {
+if ($backend -eq "ONNX_RUNTIME_ANDROID[models/comma_model.onnx]" -and $ready -eq "true" -and $failures -eq 0 -and $outputs -gt 0) {
   Write-Host "compat_verdict=PASS_COMMA_ORT"
   exit 0
 }
 
-if ($backend -eq "ONNX_RUNTIME_ANDROID[models/mul_1.onnx]" -and $ready -eq "true" -and $failures -eq 0) {
+if ($backend -eq "ONNX_RUNTIME_ANDROID[models/mul_1.onnx]" -and $ready -eq "true" -and $failures -eq 0 -and $outputs -gt 0) {
   Write-Host "compat_verdict=PASS_PROBE_FALLBACK"
   exit 0
 }

@@ -91,8 +91,12 @@
 - `assets/models/comma_model.onnx` ->
 - `assets/models/mul_1.onnx` ->
 - `ONNX_PLACEHOLDER`
-3. livePose 입력 결합은 다음 단계
-4. comma 실모델은 표준 ONNX와 다를 수 있어(커스텀 op/입출력 스키마 차이), 별도 호환 검증이 필요함
+3. ONNX 입력 주입 정책:
+- 모델의 모든 입력 이름/shape/type을 읽어 다중 입력 map으로 `session.run(...)` 실행
+- 현재 synthetic tensor 지원 dtype:
+  - `UINT8`, `INT8`, `INT16`, `INT32`, `INT64`, `BOOL`, `FLOAT`
+4. livePose 입력 결합은 다음 단계
+5. comma 실모델은 표준 ONNX와 다를 수 있어(커스텀 op/입출력 스키마 차이), 별도 호환 검증이 필요함
 
 ## 7. ADB 자동 실행 (수동 최소화)
 
@@ -146,3 +150,14 @@ powershell -ExecutionPolicy Bypass -File tools/run_g2_onnx_compat_probe.ps1
 - `compat_verdict=PASS_COMMA_ORT`
 - `compat_verdict=PASS_PROBE_FALLBACK`
 - `compat_verdict=FAIL_ORT_INIT`
+
+프로브 통과 조건:
+1. `g2_inference_ready=true`
+2. `g2_inference_failures=0`
+3. `g2_inference_outputs > 0`
+4. 스크립트가 `INJECT_FRAME` 브로드캐스트를 보내 실제 추론 호출을 강제함
+
+스키마 맞춤 의미(예: `driving_vision.onnx`):
+1. 입력 `img`/`big_img`를 둘 다 공급해야 함
+2. 입력 dtype이 `UINT8`이면 float가 아니라 uint8 tensor로 넣어야 함
+3. 출력이 `FLOAT16`이어도 ONNX runtime에서 읽을 수 있으면 통과

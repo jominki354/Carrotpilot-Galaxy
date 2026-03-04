@@ -25,6 +25,10 @@ Android 16 / One UI 8 기반 `single-APK` 코어 런타임으로 Carrotpilot/ope
 - `g2_inference_latency_ms_p95`
 - `g2_inference_failures`
 - `g2_inference_last_failure`
+4. ONNX 런타임 엔진:
+- 다중 입력 tensor를 모두 주입하여 실행
+- 입력 dtype(`UINT8/INT8/INT16/INT32/INT64/BOOL/FLOAT`)을 스키마대로 생성
+- 출력 tensor는 형 변환 가능한 타입(예: `FLOAT16`)을 우선 사용
 
 진행 게이트:
 1. G0 아키텍처 동결
@@ -59,6 +63,11 @@ ONNX 호환성 프로브:
 - `PASS_COMMA_ORT`
 - `PASS_PROBE_FALLBACK`
 - `FAIL_ORT_INIT`
+3. 통과 기준:
+- `g2_inference_ready=true`
+- `g2_inference_failures=0`
+- `g2_inference_outputs > 0`
+- 스크립트가 `INJECT_FRAME` 자동 주입으로 실제 추론 호출 여부를 함께 확인
 
 comma 모델 투입(ADB push + probe):
 1. `powershell -ExecutionPolicy Bypass -File tools/push_comma_model_and_probe.ps1 -ModelPath C:\path\comma_model.onnx`
