@@ -104,7 +104,7 @@ class OnnxRuntimeAssetInferenceEngine(
   private var inputShape: LongArray = longArrayOf(1L)
   private var initialized = false
 
-  override val backendName: String = "ONNX_RUNTIME_ANDROID"
+  override val backendName: String = "ONNX_RUNTIME_ANDROID[$modelAssetPath]"
 
   override fun initialize(): Boolean {
     if (initialized) return true

@@ -65,9 +65,15 @@ class RuntimeViewModel(
     inferenceEngine = FallbackInferenceEngine(
       primary = OnnxRuntimeAssetInferenceEngine(
         context = appContext,
-        modelAssetPath = "models/mul_1.onnx",
+        modelAssetPath = "models/comma_model.onnx",
       ),
-      fallback = OnnxPlaceholderInferenceEngine(),
+      fallback = FallbackInferenceEngine(
+        primary = OnnxRuntimeAssetInferenceEngine(
+          context = appContext,
+          modelAssetPath = "models/mul_1.onnx",
+        ),
+        fallback = OnnxPlaceholderInferenceEngine(),
+      ),
     ),
   )
   private var modelStateCollectorJob: Job? = null

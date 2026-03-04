@@ -14,8 +14,11 @@ Android 16 / One UI 8 기반 `single-APK` 코어 런타임으로 Carrotpilot/ope
 - `offline_porting/README.md` (실차 없는 오프라인 포팅/seed 생성)
 
 현재 G2 추론 상태(2026-03-04):
-1. `ONNX_RUNTIME_ANDROID` 연결 완료(probe model)
-2. 실패 시 `ONNX_PLACEHOLDER` fallback 유지
+1. ONNX 로드 우선순위:
+- `models/comma_model.onnx`
+- `models/mul_1.onnx` (probe fallback)
+- `ONNX_PLACEHOLDER`
+2. `g2_inference_backend`에 실제 로드 경로가 표기됨
 3. 디버그 출력:
 - `g2_inference_latency_ms_p50`
 - `g2_inference_latency_ms_p95`
@@ -46,3 +49,10 @@ Android 16 / One UI 8 기반 `single-APK` 코어 런타임으로 Carrotpilot/ope
 - `T3-2MIN`
 - `T3-5MIN`
 - `T3-STOPPED`
+
+ONNX 호환성 프로브:
+1. `powershell -ExecutionPolicy Bypass -File tools/run_g2_onnx_compat_probe.ps1`
+2. 판정값:
+- `PASS_COMMA_ORT`
+- `PASS_PROBE_FALLBACK`
+- `FAIL_ORT_INIT`

@@ -45,7 +45,10 @@
 - `G2 Error`: `NONE`
 - `G2 modelHz`: 0 초과
 - `G2 modelFrames`: 증가 중
-- `G2 inferenceBackend`: `ONNX_RUNTIME_ANDROID` (fallback 시 `ONNX_PLACEHOLDER`)
+- `G2 inferenceBackend`:
+  - `ONNX_RUNTIME_ANDROID[models/comma_model.onnx]` 또는
+  - `ONNX_RUNTIME_ANDROID[models/mul_1.onnx]` (probe fallback) 또는
+  - `ONNX_PLACEHOLDER` (ORT 전부 실패)
 - `G2 inferenceReady`: `true`
 - `G2 inferenceOutputs`: 증가 중
 - `G2 inferenceLatencyP50(ms)`: 0 초과
@@ -80,7 +83,8 @@
 ## 6. 현재 범위 제한
 
 1. 본 문서는 `Model Mock + Real Camera ingest`를 다룸
-2. 현재 ONNX Runtime은 `probe model(models/mul_1.onnx)`로 연결됨
+2. ONNX 로드 우선순위:
+- `models/comma_model.onnx` -> 실패 시 `models/mul_1.onnx` -> 실패 시 `ONNX_PLACEHOLDER`
 3. livePose 입력 결합은 다음 단계
 4. comma 실모델은 표준 ONNX와 다를 수 있어(커스텀 op/입출력 스키마 차이), 별도 호환 검증이 필요함
 
@@ -119,3 +123,16 @@ QNN/SNPE 착수 조건(하나라도 만족 시):
 1. 동일 입력 seed로 ORT vs 후보 backend 출력 비교 하네스
 2. 모델 I/O 스키마 고정 문서(입력 shape/type, 출력 tensor 의미)
 3. fallback 정책 유지(실패 시 즉시 placeholder 복귀)
+
+권장 파일 배치:
+1. comma 실모델을 `app/src/main/assets/models/comma_model.onnx`로 배치
+2. 앱 재설치 후 `g2_inference_backend`가 `...comma_model.onnx`인지 확인
+
+호환성 프로브(원클릭):
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/run_g2_onnx_compat_probe.ps1
+```
+출력:
+- `compat_verdict=PASS_COMMA_ORT`
+- `compat_verdict=PASS_PROBE_FALLBACK`
+- `compat_verdict=FAIL_ORT_INIT`
