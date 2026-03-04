@@ -15,6 +15,7 @@ import java.nio.FloatBuffer
 import java.nio.IntBuffer
 import java.nio.LongBuffer
 import java.nio.ShortBuffer
+import kotlin.math.sqrt
 
 data class ModelInferenceResult(
   val success: Boolean,
@@ -26,14 +27,14 @@ data class ModelInferenceResult(
 interface ModelInferenceEngine {
   val backendName: String
   fun initialize(): Boolean
-  fun run(frameTimestampMs: Long): ModelInferenceResult
+  fun run(frameTimestampMs: Long, inputFrame: ModelInputFrame? = null): ModelInferenceResult
   fun release() {}
 }
 
 class MockModelInferenceEngine : ModelInferenceEngine {
   override val backendName: String = "MOCK"
   override fun initialize(): Boolean = true
-  override fun run(frameTimestampMs: Long): ModelInferenceResult {
+  override fun run(frameTimestampMs: Long, inputFrame: ModelInputFrame?): ModelInferenceResult {
     return ModelInferenceResult(
       success = true,
       latencyMs = 0.2,
@@ -45,7 +46,7 @@ class MockModelInferenceEngine : ModelInferenceEngine {
 class OnnxPlaceholderInferenceEngine : ModelInferenceEngine {
   override val backendName: String = "ONNX_PLACEHOLDER"
   override fun initialize(): Boolean = true
-  override fun run(frameTimestampMs: Long): ModelInferenceResult {
+  override fun run(frameTimestampMs: Long, inputFrame: ModelInputFrame?): ModelInferenceResult {
     return ModelInferenceResult(
       success = true,
       latencyMs = 0.4,
@@ -80,15 +81,15 @@ class FallbackInferenceEngine(
     return true
   }
 
-  override fun run(frameTimestampMs: Long): ModelInferenceResult {
-    val result = activeEngine.run(frameTimestampMs)
+  override fun run(frameTimestampMs: Long, inputFrame: ModelInputFrame?): ModelInferenceResult {
+    val result = activeEngine.run(frameTimestampMs, inputFrame)
     if (result.success || activeEngine === fallback) {
       return result
     }
     if (!fallbackActivated && fallback.initialize()) {
       fallbackActivated = true
       activeEngine = fallback
-      return fallback.run(frameTimestampMs)
+      return fallback.run(frameTimestampMs, inputFrame)
     }
     return result
   }
@@ -152,7 +153,7 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
     }
   }
 
-  override fun run(frameTimestampMs: Long): ModelInferenceResult {
+  override fun run(frameTimestampMs: Long, inputFrame: ModelInputFrame?): ModelInferenceResult {
     val currentSession = session
     val env = environment
     val specs = inputSpecs
@@ -168,7 +169,7 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
     val tensors = linkedMapOf<String, OnnxTensor>()
     return try {
       specs.forEachIndexed { index, spec ->
-        tensors[spec.name] = createInputTensor(env, spec, frameTimestampMs, index)
+        tensors[spec.name] = createInputTensor(env, spec, frameTimestampMs, index, inputFrame)
       }
       result = currentSession.run(tensors)
       val latencyMs = (System.nanoTime() - startedAtNs) / 1_000_000.0
@@ -228,6 +229,7 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
   private fun isSupportedInputType(type: OnnxJavaType): Boolean {
     return when (type) {
       OnnxJavaType.FLOAT,
+      OnnxJavaType.FLOAT16,
       OnnxJavaType.UINT8,
       OnnxJavaType.INT8,
       OnnxJavaType.INT16,
@@ -245,51 +247,67 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
     spec: OnnxInputSpec,
     frameTimestampMs: Long,
     inputIndex: Int,
+    inputFrame: ModelInputFrame?,
   ): OnnxTensor {
-    val seed = (((frameTimestampMs + inputIndex * 97L) % 255L) + 1L).toInt()
+    val unsignedPattern = buildUnsignedBytePattern(spec, frameTimestampMs, inputIndex, inputFrame)
     return when (spec.type) {
       OnnxJavaType.FLOAT -> {
-        val value = seed.toFloat() / 255.0f
-        val data = FloatArray(spec.elementCount) { value }
+        val data = FloatArray(spec.elementCount) { index ->
+          (unsignedPattern[index].toInt() and 0xFF) / 255.0f
+        }
         OnnxTensor.createTensor(env, FloatBuffer.wrap(data), spec.shape)
       }
 
+      OnnxJavaType.FLOAT16 -> {
+        val buffer = directShortByteBuffer(spec.elementCount)
+        val shortView = buffer.asShortBuffer()
+        repeat(spec.elementCount) { index ->
+          val normalized = (unsignedPattern[index].toInt() and 0xFF) / 255.0f
+          shortView.put(floatToHalfBits(normalized))
+        }
+        buffer.rewind()
+        OnnxTensor.createTensor(env, buffer, spec.shape, OnnxJavaType.FLOAT16)
+      }
+
       OnnxJavaType.UINT8 -> {
-        val data = ByteArray(spec.elementCount) { seed.toByte() }
-        val buffer = directByteBuffer(data)
+        val buffer = directByteBuffer(unsignedPattern)
         OnnxTensor.createTensor(env, buffer, spec.shape, OnnxJavaType.UINT8)
       }
 
       OnnxJavaType.INT8 -> {
-        val value = (seed % 127).toByte()
-        val data = ByteArray(spec.elementCount) { value }
+        val data = ByteArray(spec.elementCount) { index ->
+          ((unsignedPattern[index].toInt() and 0xFF) - 128).toByte()
+        }
         val buffer = directByteBuffer(data)
         OnnxTensor.createTensor(env, buffer, spec.shape, OnnxJavaType.INT8)
       }
 
       OnnxJavaType.BOOL -> {
         val data = ByteArray(spec.elementCount) { index ->
-          if ((index + seed) % 2 == 0) 1 else 0
+          if ((unsignedPattern[index].toInt() and 0xFF) >= 128) 1 else 0
         }
         val buffer = directByteBuffer(data)
         OnnxTensor.createTensor(env, buffer, spec.shape, OnnxJavaType.BOOL)
       }
 
       OnnxJavaType.INT16 -> {
-        val value = (seed % 32767).toShort()
-        val data = ShortArray(spec.elementCount) { value }
+        val data = ShortArray(spec.elementCount) { index ->
+          (unsignedPattern[index].toInt() and 0xFF).toShort()
+        }
         OnnxTensor.createTensor(env, ShortBuffer.wrap(data), spec.shape, OnnxJavaType.INT16)
       }
 
       OnnxJavaType.INT32 -> {
-        val value = seed
-        val data = IntArray(spec.elementCount) { value }
+        val data = IntArray(spec.elementCount) { index ->
+          unsignedPattern[index].toInt() and 0xFF
+        }
         OnnxTensor.createTensor(env, IntBuffer.wrap(data), spec.shape)
       }
 
       OnnxJavaType.INT64 -> {
-        val value = seed.toLong()
-        val data = LongArray(spec.elementCount) { value }
+        val data = LongArray(spec.elementCount) { index ->
+          (unsignedPattern[index].toInt() and 0xFF).toLong()
+        }
         OnnxTensor.createTensor(env, LongBuffer.wrap(data), spec.shape)
       }
 
@@ -299,11 +317,139 @@ internal abstract class BaseOnnxRuntimeInferenceEngine(
     }
   }
 
+  private fun buildUnsignedBytePattern(
+    spec: OnnxInputSpec,
+    frameTimestampMs: Long,
+    inputIndex: Int,
+    inputFrame: ModelInputFrame?,
+  ): ByteArray {
+    val fromImage = inputFrame?.let { frame ->
+      buildImageDerivedPattern(spec, frame)
+    }
+    if (fromImage != null) {
+      return fromImage
+    }
+
+    val seed = (((frameTimestampMs + inputIndex * 97L) % 255L) + 1L).toByte()
+    return ByteArray(spec.elementCount) { seed }
+  }
+
+  private fun buildImageDerivedPattern(spec: OnnxInputSpec, frame: ModelInputFrame): ByteArray? {
+    if (frame.width <= 0 || frame.height <= 0) return null
+    val expectedPixels = frame.width * frame.height
+    if (expectedPixels <= 0 || frame.lumaBytes.size < expectedPixels) return null
+
+    val (targetWidth, targetHeight) = resolveTargetImageSize(spec, frame)
+    if (targetWidth <= 0 || targetHeight <= 0) return null
+    val resized = resizeLumaNearestNeighbor(
+      source = frame.lumaBytes,
+      sourceWidth = frame.width,
+      sourceHeight = frame.height,
+      targetWidth = targetWidth,
+      targetHeight = targetHeight,
+    )
+    if (resized.isEmpty()) return null
+
+    return ByteArray(spec.elementCount) { index ->
+      resized[index % resized.size]
+    }
+  }
+
+  private fun resolveTargetImageSize(
+    spec: OnnxInputSpec,
+    frame: ModelInputFrame,
+  ): Pair<Int, Int> {
+    var targetWidth = frame.width
+    var targetHeight = frame.height
+    if (spec.shape.size >= 2) {
+      val h = spec.shape[spec.shape.size - 2].toInt()
+      val w = spec.shape[spec.shape.size - 1].toInt()
+      if (h > 0 && w > 0) {
+        targetWidth = w
+        targetHeight = h
+      }
+    }
+
+    val targetPixels = targetWidth.toLong() * targetHeight.toLong()
+    if (targetPixels > spec.elementCount.toLong()) {
+      val side = sqrt(spec.elementCount.toDouble()).toInt().coerceAtLeast(1)
+      targetWidth = side
+      targetHeight = side
+    }
+    return targetWidth to targetHeight
+  }
+
+  private fun resizeLumaNearestNeighbor(
+    source: ByteArray,
+    sourceWidth: Int,
+    sourceHeight: Int,
+    targetWidth: Int,
+    targetHeight: Int,
+  ): ByteArray {
+    if (sourceWidth <= 0 || sourceHeight <= 0 || targetWidth <= 0 || targetHeight <= 0) {
+      return ByteArray(0)
+    }
+    if (source.size < sourceWidth * sourceHeight) {
+      return ByteArray(0)
+    }
+    if (sourceWidth == targetWidth && sourceHeight == targetHeight) {
+      return source.copyOf(sourceWidth * sourceHeight)
+    }
+
+    val output = ByteArray(targetWidth * targetHeight)
+    for (y in 0 until targetHeight) {
+      val sourceY = (y.toLong() * sourceHeight / targetHeight)
+        .toInt()
+        .coerceIn(0, sourceHeight - 1)
+      for (x in 0 until targetWidth) {
+        val sourceX = (x.toLong() * sourceWidth / targetWidth)
+          .toInt()
+          .coerceIn(0, sourceWidth - 1)
+        output[y * targetWidth + x] = source[sourceY * sourceWidth + sourceX]
+      }
+    }
+    return output
+  }
+
   private fun directByteBuffer(bytes: ByteArray): ByteBuffer {
-    return ByteBuffer.allocateDirect(bytes.size)
-      .order(ByteOrder.nativeOrder())
-      .put(bytes)
-      .rewind() as ByteBuffer
+    val buffer = ByteBuffer.allocateDirect(bytes.size).order(ByteOrder.nativeOrder())
+    buffer.put(bytes)
+    buffer.rewind()
+    return buffer
+  }
+
+  private fun directShortByteBuffer(size: Int): ByteBuffer {
+    return ByteBuffer.allocateDirect(size * Short.SIZE_BYTES).order(ByteOrder.nativeOrder())
+  }
+
+  private fun floatToHalfBits(value: Float): Short {
+    val bits = value.toRawBits()
+    val sign = (bits ushr 16) and 0x8000
+    var exponent = ((bits ushr 23) and 0xFF) - 127 + 15
+    var mantissa = bits and 0x7FFFFF
+
+    if (exponent <= 0) {
+      if (exponent < -10) {
+        return sign.toShort()
+      }
+      mantissa = mantissa or 0x800000
+      val shift = 14 - exponent
+      var halfMantissa = mantissa ushr shift
+      if (((mantissa ushr (shift - 1)) and 0x1) == 1) {
+        halfMantissa += 1
+      }
+      return (sign or halfMantissa).toShort()
+    }
+
+    if (exponent >= 31) {
+      return (sign or 0x7C00).toShort()
+    }
+
+    var halfBits = sign or (exponent shl 10) or (mantissa ushr 13)
+    if ((mantissa and 0x1000) != 0) {
+      halfBits += 1
+    }
+    return halfBits.toShort()
   }
 }
 

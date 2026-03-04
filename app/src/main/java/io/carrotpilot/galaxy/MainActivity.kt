@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.carrotpilot.galaxy.model.AndroidCameraFrameSource
+import io.carrotpilot.galaxy.model.ModelInputFrame
 import io.carrotpilot.galaxy.model.ModelRuntimeSourceMode
 import io.carrotpilot.galaxy.model.ModelRuntimeStage
 import io.carrotpilot.galaxy.runtime.RuntimeViewModel
@@ -233,7 +234,10 @@ class MainActivity : ComponentActivity() {
               }
 
               "INJECT_FRAME" ->
-                vm.onRealCameraFrame(SystemClock.elapsedRealtime())
+                vm.onRealCameraFrame(
+                  timestampMs = SystemClock.elapsedRealtime(),
+                  frame = buildAutomationProbeFrame(),
+                )
 
               "DUMP" ->
                 Log.i(AUTOMATION_LOG_TAG, vm.buildDebugSnapshotText())
@@ -280,5 +284,21 @@ class MainActivity : ComponentActivity() {
         onReset = vm::resetState,
       )
     }
+  }
+
+  private fun buildAutomationProbeFrame(
+    width: Int = 256,
+    height: Int = 128,
+  ): ModelInputFrame {
+    val luma = ByteArray(width * height) { index ->
+      val x = index % width
+      val y = index / width
+      ((x + y) and 0xFF).toByte()
+    }
+    return ModelInputFrame(
+      lumaBytes = luma,
+      width = width,
+      height = height,
+    )
   }
 }

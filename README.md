@@ -27,8 +27,11 @@ Android 16 / One UI 8 기반 `single-APK` 코어 런타임으로 Carrotpilot/ope
 - `g2_inference_last_failure`
 4. ONNX 런타임 엔진:
 - 다중 입력 tensor를 모두 주입하여 실행
-- 입력 dtype(`UINT8/INT8/INT16/INT32/INT64/BOOL/FLOAT`)을 스키마대로 생성
+- 입력 dtype(`FLOAT16/FLOAT/UINT8/INT8/INT16/INT32/INT64/BOOL`)을 스키마대로 생성
 - 출력 tensor는 형 변환 가능한 타입(예: `FLOAT16`)을 우선 사용
+5. `REAL_CAMERA` 모드:
+- CameraX Y plane을 `ModelInputFrame`으로 추출
+- 입력 스키마(예: `img`, `big_img`) 크기에 맞춰 nearest-neighbor resize 후 채널 축으로 반복 주입
 
 진행 게이트:
 1. G0 아키텍처 동결

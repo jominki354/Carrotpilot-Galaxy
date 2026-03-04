@@ -8,8 +8,22 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.atomic.AtomicReference
 
 class ModelRuntimeCameraPipelineTest {
+  private class CapturingInferenceEngine : ModelInferenceEngine {
+    val lastFrame = AtomicReference<ModelInputFrame?>(null)
+    override val backendName: String = "CAPTURE"
+    override fun initialize(): Boolean = true
+    override fun run(
+      frameTimestampMs: Long,
+      inputFrame: ModelInputFrame?,
+    ): ModelInferenceResult {
+      lastFrame.set(inputFrame)
+      return ModelInferenceResult(success = true, latencyMs = 0.1, outputsProduced = 1)
+    }
+  }
+
   @Test
   fun permissionDenied_setsCameraPermissionDeniedError() = runBlocking {
     val scope = CoroutineScope(Dispatchers.Default)
@@ -139,6 +153,33 @@ class ModelRuntimeCameraPipelineTest {
     assertEquals(0L, pipeline.state.value.inferenceFailures)
     assertEquals("-", pipeline.state.value.inferenceLastFailure)
 
+    scope.cancel()
+  }
+
+  @Test
+  fun onCameraFrame_withImage_passesFrameIntoInferenceEngine() = runBlocking {
+    val scope = CoroutineScope(Dispatchers.Default)
+    val engine = CapturingInferenceEngine()
+    val pipeline = ModelRuntimeCameraPipeline(
+      scope = scope,
+      inferenceEngine = engine,
+    )
+
+    pipeline.startSession(permissionGranted = true)
+    val frame = ModelInputFrame(
+      lumaBytes = ByteArray(16) { index -> index.toByte() },
+      width = 4,
+      height = 4,
+    )
+    pipeline.onCameraFrame(inputFrame = frame)
+
+    val captured = engine.lastFrame.get()
+    assertTrue(captured != null)
+    assertEquals(4, captured?.width)
+    assertEquals(4, captured?.height)
+    assertEquals(16, captured?.lumaBytes?.size)
+
+    pipeline.stopSession()
     scope.cancel()
   }
 }

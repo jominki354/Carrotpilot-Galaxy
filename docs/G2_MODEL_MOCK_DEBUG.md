@@ -94,9 +94,11 @@
 3. ONNX 입력 주입 정책:
 - 모델의 모든 입력 이름/shape/type을 읽어 다중 입력 map으로 `session.run(...)` 실행
 - 현재 synthetic tensor 지원 dtype:
-  - `UINT8`, `INT8`, `INT16`, `INT32`, `INT64`, `BOOL`, `FLOAT`
-4. livePose 입력 결합은 다음 단계
-5. comma 실모델은 표준 ONNX와 다를 수 있어(커스텀 op/입출력 스키마 차이), 별도 호환 검증이 필요함
+  - `FLOAT16`, `FLOAT`, `UINT8`, `INT8`, `INT16`, `INT32`, `INT64`, `BOOL`
+4. `REAL_CAMERA` 모드에서는 CameraX Y plane을 읽어 실제 이미지 기반 입력을 생성
+5. 입력 shape의 마지막 2축 기준으로 resize한 후 채널/배치 축에 반복 주입
+6. livePose 입력 결합은 다음 단계
+7. comma 실모델은 표준 ONNX와 다를 수 있어(커스텀 op/입출력 스키마 차이), 별도 호환 검증이 필요함
 
 ## 7. ADB 자동 실행 (수동 최소화)
 

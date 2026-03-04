@@ -10,6 +10,7 @@ import io.carrotpilot.galaxy.model.ModelRuntimeMockScenario
 import io.carrotpilot.galaxy.model.ModelRuntimeSourceMode
 import io.carrotpilot.galaxy.model.ModelRuntimeStage
 import io.carrotpilot.galaxy.model.ModelRuntimeState
+import io.carrotpilot.galaxy.model.ModelInputFrame
 import io.carrotpilot.galaxy.model.FallbackInferenceEngine
 import io.carrotpilot.galaxy.model.OnnxPlaceholderInferenceEngine
 import io.carrotpilot.galaxy.model.OnnxRuntimeAssetInferenceEngine
@@ -254,8 +255,8 @@ class RuntimeViewModel(
     modelRuntimeCamera.reset()
   }
 
-  fun onRealCameraFrame(timestampMs: Long) {
-    modelRuntimeCamera.onCameraFrame(timestampMs)
+  fun onRealCameraFrame(timestampMs: Long, frame: ModelInputFrame? = null) {
+    modelRuntimeCamera.onCameraFrame(timestampMs, frame)
   }
 
   fun onRealCameraSourceError() {

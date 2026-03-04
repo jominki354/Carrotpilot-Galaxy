@@ -132,7 +132,7 @@ class ModelRuntimeCameraPipeline(
     }
   }
 
-  fun onCameraFrame(timestampMs: Long = nowMs()) {
+  fun onCameraFrame(timestampMs: Long = nowMs(), inputFrame: ModelInputFrame? = null) {
     if (!sessionActive) return
     val observedAtMs = nowMs()
     modelFrameCount += 1
@@ -141,7 +141,7 @@ class ModelRuntimeCameraPipeline(
     lastModelAtMs = observedAtMs
     lastPoseAtMs = observedAtMs
     if (inferenceReady) {
-      applyInferenceResult(inferenceEngine.run(observedAtMs))
+      applyInferenceResult(inferenceEngine.run(observedAtMs, inputFrame))
     }
   }
 
