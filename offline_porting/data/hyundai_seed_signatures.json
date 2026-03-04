@@ -1,0 +1,253 @@
+{
+  "generated_at_utc": "2026-03-03T14:32:35.030149+00:00",
+  "from_snapshot": "..\\Carrotpilot_galaxy\\offline_porting\\data\\hyundai_openpilot_snapshot.json",
+  "models": [
+    "KIA_EV6",
+    "HYUNDAI_KONA_EV",
+    "HYUNDAI_CASPER_EV"
+  ],
+  "seeds_by_model": {
+    "KIA_EV6": [
+      {
+        "address": 80,
+        "length": 16
+      },
+      {
+        "address": 81,
+        "length": 32
+      },
+      {
+        "address": 514,
+        "length": 32
+      },
+      {
+        "address": 577,
+        "length": 24
+      },
+      {
+        "address": 578,
+        "length": 24
+      },
+      {
+        "address": 579,
+        "length": 24
+      },
+      {
+        "address": 580,
+        "length": 24
+      },
+      {
+        "address": 581,
+        "length": 24
+      },
+      {
+        "address": 582,
+        "length": 24
+      },
+      {
+        "address": 583,
+        "length": 24
+      },
+      {
+        "address": 584,
+        "length": 24
+      },
+      {
+        "address": 585,
+        "length": 24
+      },
+      {
+        "address": 586,
+        "length": 24
+      },
+      {
+        "address": 587,
+        "length": 24
+      },
+      {
+        "address": 588,
+        "length": 24
+      },
+      {
+        "address": 589,
+        "length": 24
+      },
+      {
+        "address": 590,
+        "length": 24
+      },
+      {
+        "address": 591,
+        "length": 24
+      },
+      {
+        "address": 624,
+        "length": 32
+      },
+      {
+        "address": 625,
+        "length": 32
+      },
+      {
+        "address": 626,
+        "length": 32
+      },
+      {
+        "address": 627,
+        "length": 32
+      },
+      {
+        "address": 628,
+        "length": 32
+      },
+      {
+        "address": 629,
+        "length": 32
+      }
+    ],
+    "HYUNDAI_KONA_EV": [
+      {
+        "address": 320,
+        "length": 8
+      },
+      {
+        "address": 339,
+        "length": 8
+      },
+      {
+        "address": 832,
+        "length": 8
+      },
+      {
+        "address": 304,
+        "length": 8
+      },
+      {
+        "address": 352,
+        "length": 8
+      },
+      {
+        "address": 356,
+        "length": 4
+      },
+      {
+        "address": 544,
+        "length": 8
+      },
+      {
+        "address": 881,
+        "length": 8
+      },
+      {
+        "address": 882,
+        "length": 8
+      },
+      {
+        "address": 688,
+        "length": 5
+      },
+      {
+        "address": 593,
+        "length": 8
+      },
+      {
+        "address": 902,
+        "length": 8
+      },
+      {
+        "address": 903,
+        "length": 8
+      },
+      {
+        "address": 909,
+        "length": 8
+      },
+      {
+        "address": 1056,
+        "length": 8
+      },
+      {
+        "address": 1057,
+        "length": 8
+      },
+      {
+        "address": 897,
+        "length": 8
+      },
+      {
+        "address": 905,
+        "length": 8
+      },
+      {
+        "address": 916,
+        "length": 8
+      },
+      {
+        "address": 1136,
+        "length": 8
+      },
+      {
+        "address": 1151,
+        "length": 6
+      },
+      {
+        "address": 1265,
+        "length": 4
+      },
+      {
+        "address": 1078,
+        "length": 4
+      },
+      {
+        "address": 1168,
+        "length": 7
+      }
+    ],
+    "HYUNDAI_CASPER_EV": [
+      {
+        "address": 261,
+        "length": 8
+      },
+      {
+        "address": 416,
+        "length": 8
+      },
+      {
+        "address": 608,
+        "length": 8
+      },
+      {
+        "address": 809,
+        "length": 8
+      }
+    ]
+  },
+  "metadata": {
+    "KIA_EV6": {
+      "source": "openpilotci_route",
+      "routes_used": [
+        "9b25e8c1484a1b67|2023-04-13--10-41-45/0"
+      ],
+      "route_errors": [
+        "68d6a96e703c00c9|2022-09-10--16-09-39: Could not extract route signatures: route=68d6a96e703c00c9|2022-09-10--16-09-39: No downloadable route log found: route=68d6a96e703c00c9|2022-09-10--16-09-39, segment=24"
+      ],
+      "signatures_common_count": 92,
+      "signatures_selected_count": 24
+    },
+    "HYUNDAI_KONA_EV": {
+      "source": "openpilotci_route",
+      "routes_used": [
+        "efc48acf44b1e64d|2021-05-28--21-05-04/0",
+        "f90d3cd06caeb6fa|2023-09-06--17-15-47/0"
+      ],
+      "route_errors": [],
+      "signatures_common_count": 61,
+      "signatures_selected_count": 24
+    },
+    "HYUNDAI_CASPER_EV": {
+      "source": "temporary_fallback",
+      "reason": "no openpilot FW_VERSIONS and no public route in snapshot",
+      "alias_candidate": "HYUNDAI_CASPER"
+    }
+  }
+}

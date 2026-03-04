@@ -1,0 +1,427 @@
+{
+  "generated_at_utc": "2026-03-03T14:06:49.825419+00:00",
+  "source_root": "e:\\Carrotpilot_Galaxy\\Carrotpilot",
+  "files": {
+    "hyundai_fingerprints": "e:\\Carrotpilot_Galaxy\\Carrotpilot\\opendbc_repo\\opendbc\\car\\hyundai\\fingerprints.py",
+    "hyundai_values": "e:\\Carrotpilot_Galaxy\\Carrotpilot\\opendbc_repo\\opendbc\\car\\hyundai\\values.py",
+    "routes": "e:\\Carrotpilot_Galaxy\\Carrotpilot\\opendbc_repo\\opendbc\\car\\tests\\routes.py"
+  },
+  "counts": {
+    "platform_models_total": 100,
+    "fw_models_total": 80,
+    "route_models_total": 68
+  },
+  "platform_models": [
+    "GENESIS_EQ900",
+    "GENESIS_EQ900_L",
+    "GENESIS_G70",
+    "GENESIS_G70_2020",
+    "GENESIS_G80",
+    "GENESIS_G80_2ND_GEN_FL",
+    "GENESIS_G90",
+    "GENESIS_G90_2019",
+    "GENESIS_GV60_EV_1ST_GEN",
+    "GENESIS_GV70_1ST_GEN",
+    "GENESIS_GV70_ELECTRIFIED_1ST_GEN",
+    "GENESIS_GV70_EV_1ST_GEN",
+    "GENESIS_GV80",
+    "HYUNDAI_AZERA_6TH_GEN",
+    "HYUNDAI_AZERA_7TH_GEN",
+    "HYUNDAI_AZERA_HEV_6TH_GEN",
+    "HYUNDAI_CASPER",
+    "HYUNDAI_CASPER_EV",
+    "HYUNDAI_CUSTIN_1ST_GEN",
+    "HYUNDAI_ELANTRA",
+    "HYUNDAI_ELANTRA_2021",
+    "HYUNDAI_ELANTRA_GT_I30",
+    "HYUNDAI_ELANTRA_HEV_2021",
+    "HYUNDAI_GENESIS",
+    "HYUNDAI_GRANDEUR_IG",
+    "HYUNDAI_GRANDEUR_IG_HEV",
+    "HYUNDAI_IONIQ",
+    "HYUNDAI_IONIQ_5",
+    "HYUNDAI_IONIQ_5_N",
+    "HYUNDAI_IONIQ_5_PE",
+    "HYUNDAI_IONIQ_6",
+    "HYUNDAI_IONIQ_9",
+    "HYUNDAI_IONIQ_EV_2020",
+    "HYUNDAI_IONIQ_EV_LTD",
+    "HYUNDAI_IONIQ_HEV_2022",
+    "HYUNDAI_IONIQ_PHEV",
+    "HYUNDAI_IONIQ_PHEV_2019",
+    "HYUNDAI_KONA",
+    "HYUNDAI_KONA_2022",
+    "HYUNDAI_KONA_EV",
+    "HYUNDAI_KONA_EV_2022",
+    "HYUNDAI_KONA_EV_2ND_GEN",
+    "HYUNDAI_KONA_HEV",
+    "HYUNDAI_KONA_HEV_2ND_GEN",
+    "HYUNDAI_NEXO",
+    "HYUNDAI_NEXO_1ST_GEN",
+    "HYUNDAI_PALISADE",
+    "HYUNDAI_PORTER_II_EV",
+    "HYUNDAI_SANTAFE_MX5",
+    "HYUNDAI_SANTAFE_MX5_HEV",
+    "HYUNDAI_SANTA_CRUZ_1ST_GEN",
+    "HYUNDAI_SANTA_FE",
+    "HYUNDAI_SANTA_FE_2022",
+    "HYUNDAI_SANTA_FE_HEV_2022",
+    "HYUNDAI_SANTA_FE_PHEV_2022",
+    "HYUNDAI_SONATA",
+    "HYUNDAI_SONATA_2024",
+    "HYUNDAI_SONATA_HYBRID",
+    "HYUNDAI_SONATA_LF",
+    "HYUNDAI_STARIA_4TH_GEN",
+    "HYUNDAI_TUCSON",
+    "HYUNDAI_TUCSON_4TH_GEN",
+    "HYUNDAI_VELOSTER",
+    "KIA_CARNIVAL_4TH_GEN",
+    "KIA_CEED",
+    "KIA_EV3",
+    "KIA_EV6",
+    "KIA_EV6_PE",
+    "KIA_EV9",
+    "KIA_EV_SK3",
+    "KIA_FORTE",
+    "KIA_K5",
+    "KIA_K5_2021",
+    "KIA_K5_DL3_24",
+    "KIA_K5_DL3_24_HEV",
+    "KIA_K5_HEV",
+    "KIA_K5_HEV_2020",
+    "KIA_K5_HEV_2022",
+    "KIA_K7",
+    "KIA_K7_HEV",
+    "KIA_K8_HEV_1ST_GEN",
+    "KIA_K9",
+    "KIA_MOHAVE",
+    "KIA_NIRO_EV",
+    "KIA_NIRO_EV_2ND_GEN",
+    "KIA_NIRO_HEV_2021",
+    "KIA_NIRO_HEV_2ND_GEN",
+    "KIA_NIRO_PHEV",
+    "KIA_NIRO_PHEV_2022",
+    "KIA_OPTIMA_G4",
+    "KIA_OPTIMA_G4_FL",
+    "KIA_OPTIMA_H",
+    "KIA_OPTIMA_H_G4_FL",
+    "KIA_SELTOS",
+    "KIA_SORENTO",
+    "KIA_SORENTO_4TH_GEN",
+    "KIA_SORENTO_HEV_4TH_GEN",
+    "KIA_SPORTAGE_5TH_GEN",
+    "KIA_STINGER",
+    "KIA_STINGER_2022"
+  ],
+  "fw_models": [
+    "GENESIS_G70",
+    "GENESIS_G70_2020",
+    "GENESIS_G80",
+    "GENESIS_G80_2ND_GEN_FL",
+    "GENESIS_G90",
+    "GENESIS_GV60_EV_1ST_GEN",
+    "GENESIS_GV70_1ST_GEN",
+    "GENESIS_GV70_ELECTRIFIED_1ST_GEN",
+    "GENESIS_GV80",
+    "HYUNDAI_AZERA_6TH_GEN",
+    "HYUNDAI_AZERA_7TH_GEN",
+    "HYUNDAI_AZERA_HEV_6TH_GEN",
+    "HYUNDAI_CUSTIN_1ST_GEN",
+    "HYUNDAI_ELANTRA",
+    "HYUNDAI_ELANTRA_2021",
+    "HYUNDAI_ELANTRA_GT_I30",
+    "HYUNDAI_ELANTRA_HEV_2021",
+    "HYUNDAI_GENESIS",
+    "HYUNDAI_IONIQ",
+    "HYUNDAI_IONIQ_5",
+    "HYUNDAI_IONIQ_5_N",
+    "HYUNDAI_IONIQ_5_PE",
+    "HYUNDAI_IONIQ_6",
+    "HYUNDAI_IONIQ_9",
+    "HYUNDAI_IONIQ_EV_2020",
+    "HYUNDAI_IONIQ_EV_LTD",
+    "HYUNDAI_IONIQ_HEV_2022",
+    "HYUNDAI_IONIQ_PHEV",
+    "HYUNDAI_IONIQ_PHEV_2019",
+    "HYUNDAI_KONA",
+    "HYUNDAI_KONA_EV",
+    "HYUNDAI_KONA_EV_2022",
+    "HYUNDAI_KONA_EV_2ND_GEN",
+    "HYUNDAI_KONA_HEV",
+    "HYUNDAI_KONA_HEV_2ND_GEN",
+    "HYUNDAI_NEXO_1ST_GEN",
+    "HYUNDAI_PALISADE",
+    "HYUNDAI_SANTAFE_MX5",
+    "HYUNDAI_SANTAFE_MX5_HEV",
+    "HYUNDAI_SANTA_CRUZ_1ST_GEN",
+    "HYUNDAI_SANTA_FE",
+    "HYUNDAI_SANTA_FE_2022",
+    "HYUNDAI_SANTA_FE_HEV_2022",
+    "HYUNDAI_SANTA_FE_PHEV_2022",
+    "HYUNDAI_SONATA",
+    "HYUNDAI_SONATA_2024",
+    "HYUNDAI_SONATA_HYBRID",
+    "HYUNDAI_SONATA_LF",
+    "HYUNDAI_STARIA_4TH_GEN",
+    "HYUNDAI_TUCSON",
+    "HYUNDAI_TUCSON_4TH_GEN",
+    "HYUNDAI_VELOSTER",
+    "KIA_CARNIVAL_4TH_GEN",
+    "KIA_CEED",
+    "KIA_EV3",
+    "KIA_EV6",
+    "KIA_EV6_PE",
+    "KIA_EV9",
+    "KIA_FORTE",
+    "KIA_K5_2021",
+    "KIA_K5_DL3_24_HEV",
+    "KIA_K5_HEV_2020",
+    "KIA_K8_HEV_1ST_GEN",
+    "KIA_NIRO_EV",
+    "KIA_NIRO_EV_2ND_GEN",
+    "KIA_NIRO_HEV_2021",
+    "KIA_NIRO_HEV_2ND_GEN",
+    "KIA_NIRO_PHEV",
+    "KIA_NIRO_PHEV_2022",
+    "KIA_OPTIMA_G4",
+    "KIA_OPTIMA_G4_FL",
+    "KIA_OPTIMA_H",
+    "KIA_OPTIMA_H_G4_FL",
+    "KIA_SELTOS",
+    "KIA_SORENTO",
+    "KIA_SORENTO_4TH_GEN",
+    "KIA_SORENTO_HEV_4TH_GEN",
+    "KIA_SPORTAGE_5TH_GEN",
+    "KIA_STINGER",
+    "KIA_STINGER_2022"
+  ],
+  "routes_by_model": {
+    "GENESIS_G70": [
+      "70c5bec28ec8e345|2020-08-08--12-22-23"
+    ],
+    "GENESIS_G70_2020": [
+      "715ac05b594e9c59|2021-10-27--23-24-56"
+    ],
+    "GENESIS_G80": [
+      "6b301bf83f10aa90|2020-11-22--16-45-07"
+    ],
+    "GENESIS_G80_2ND_GEN_FL": [
+      "66eaa6c3b6b2afc6/00000009--3a5199aabe"
+    ],
+    "GENESIS_GV60_EV_1ST_GEN": [
+      "b5d6dc830ad63071|2022-12-12--21-28-25"
+    ],
+    "GENESIS_GV70_1ST_GEN": [
+      "ca4de5b12321bd98|2022-10-18--21-15-59"
+    ],
+    "GENESIS_GV70_ELECTRIFIED_1ST_GEN": [
+      "afe09b9f5d3f3548/00000011--15fefe1c50",
+      "afe09b9f5d3f3548/0000001b--a1129a4a15"
+    ],
+    "GENESIS_GV80": [
+      "6b0d44d22df18134|2023-05-06--10-36-55"
+    ],
+    "HYUNDAI_AZERA_6TH_GEN": [
+      "87d7f06ade479c2e|2023-09-11--23-30-11"
+    ],
+    "HYUNDAI_AZERA_HEV_6TH_GEN": [
+      "66189dd8ec7b50e6|2023-09-20--07-02-12"
+    ],
+    "HYUNDAI_CUSTIN_1ST_GEN": [
+      "0bbe367c98fa1538|2023-09-16--00-16-49"
+    ],
+    "HYUNDAI_ELANTRA": [
+      "c5ac319aa9583f83|2021-06-01--18-18-31"
+    ],
+    "HYUNDAI_ELANTRA_2021": [
+      "82e9cdd3f43bf83e|2021-05-15--02-42-51"
+    ],
+    "HYUNDAI_ELANTRA_GT_I30": [
+      "734ef96182ddf940|2022-10-02--16-41-44"
+    ],
+    "HYUNDAI_ELANTRA_HEV_2021": [
+      "715ac05b594e9c59|2021-06-20--16-21-07"
+    ],
+    "HYUNDAI_GENESIS": [
+      "6fe86b4e410e4c37|2020-07-22--16-27-13"
+    ],
+    "HYUNDAI_IONIQ": [
+      "012c95f06918eca4|2023-01-15--11-19-36",
+      "2c5cf2dd6102e5da|2020-06-26--16-00-08"
+    ],
+    "HYUNDAI_IONIQ_5": [
+      "05a8f0197fdac372|2022-10-19--14-14-09"
+    ],
+    "HYUNDAI_IONIQ_6": [
+      "eb4eae1476647463|2023-08-26--18-07-04"
+    ],
+    "HYUNDAI_IONIQ_EV_2020": [
+      "2c5cf2dd6102e5da|2020-12-17--16-06-44"
+    ],
+    "HYUNDAI_IONIQ_EV_LTD": [
+      "610ebb9faaad6b43|2020-06-13--15-28-36"
+    ],
+    "HYUNDAI_IONIQ_HEV_2022": [
+      "ab59fe909f626921|2021-10-18--18-34-28"
+    ],
+    "HYUNDAI_IONIQ_PHEV": [
+      "e1107f9d04dfb1e2|2023-09-05--22-32-12",
+      "fa8db5869167f821|2021-06-10--22-50-10"
+    ],
+    "HYUNDAI_IONIQ_PHEV_2019": [
+      "3f29334d6134fcd4|2022-03-30--22-00-50"
+    ],
+    "HYUNDAI_KONA": [
+      "22d955b2cd499c22|2020-08-10--19-58-21"
+    ],
+    "HYUNDAI_KONA_2022": [
+      "0099bdb24d82951b/00000005--c38d940b04"
+    ],
+    "HYUNDAI_KONA_EV": [
+      "efc48acf44b1e64d|2021-05-28--21-05-04",
+      "f90d3cd06caeb6fa|2023-09-06--17-15-47"
+    ],
+    "HYUNDAI_KONA_EV_2022": [
+      "ff973b941a69366f|2022-07-28--22-01-19"
+    ],
+    "HYUNDAI_KONA_EV_2ND_GEN": [
+      "1618132d68afc876|2023-08-27--09-32-14"
+    ],
+    "HYUNDAI_KONA_HEV": [
+      "49f3c13141b6bc87|2021-07-28--08-05-13"
+    ],
+    "HYUNDAI_NEXO_1ST_GEN": [
+      "a74afe0cf708748f/0000000c--b476a8fd00",
+      "a74afe0cf708748f/0000000e--a2885a9a71"
+    ],
+    "HYUNDAI_PALISADE": [
+      "9c917ba0d42ffe78|2020-04-17--12-43-19"
+    ],
+    "HYUNDAI_SANTA_CRUZ_1ST_GEN": [
+      "f0709d2bc6ca451f|2022-10-15--08-13-54"
+    ],
+    "HYUNDAI_SANTA_FE": [
+      "4dbd55df87507948|2022-03-01--09-45-38"
+    ],
+    "HYUNDAI_SANTA_FE_2022": [
+      "bf43d9df2b660eb0|2021-09-23--14-16-37"
+    ],
+    "HYUNDAI_SANTA_FE_HEV_2022": [
+      "37398f32561a23ad|2021-11-18--00-11-35"
+    ],
+    "HYUNDAI_SANTA_FE_PHEV_2022": [
+      "656ac0d830792fcc|2021-12-28--14-45-56"
+    ],
+    "HYUNDAI_SONATA": [
+      "5b7c365c50084530|2020-04-15--16-13-24"
+    ],
+    "HYUNDAI_SONATA_HYBRID": [
+      "7120aa90bbc3add7|2021-08-02--07-12-31"
+    ],
+    "HYUNDAI_SONATA_LF": [
+      "b2a38c712dcf90bd|2020-05-18--18-12-48"
+    ],
+    "HYUNDAI_STARIA_4TH_GEN": [
+      "c344fd2492c7a9d2|2023-12-11--09-03-23"
+    ],
+    "HYUNDAI_TUCSON": [
+      "fb3fd42f0baaa2f8|2022-03-30--15-25-05"
+    ],
+    "HYUNDAI_TUCSON_4TH_GEN": [
+      "36e10531feea61a4|2022-07-25--13-37-42",
+      "db68bbe12250812c|2022-12-05--00-54-12"
+    ],
+    "HYUNDAI_VELOSTER": [
+      "d624b3d19adce635|2020-08-01--14-59-12"
+    ],
+    "KIA_CARNIVAL_4TH_GEN": [
+      "409c9409979a8abc|2023-07-11--09-06-44",
+      "de59124955b921d8|2023-06-24--00-12-50"
+    ],
+    "KIA_CEED": [
+      "e0e98335f3ebc58f|2021-03-07--16-38-29"
+    ],
+    "KIA_EV6": [
+      "68d6a96e703c00c9|2022-09-10--16-09-39",
+      "9b25e8c1484a1b67|2023-04-13--10-41-45",
+      "d545129f3ca90f28|2022-10-19--09-22-54"
+    ],
+    "KIA_FORTE": [
+      "50a2212c41f65c7b|2021-05-24--16-22-06"
+    ],
+    "KIA_K5_2021": [
+      "007d5e4ad9f86d13|2021-09-30--15-09-23"
+    ],
+    "KIA_K5_HEV_2020": [
+      "c58dfc9fc16590e0|2023-01-14--13-51-48"
+    ],
+    "KIA_K8_HEV_1ST_GEN": [
+      "78ad5150de133637|2023-09-13--16-15-57"
+    ],
+    "KIA_NIRO_EV": [
+      "50c6c9b85fd1ff03|2020-10-26--17-56-06"
+    ],
+    "KIA_NIRO_EV_2ND_GEN": [
+      "b153671049a867b3|2023-04-05--10-00-30"
+    ],
+    "KIA_NIRO_HEV_2021": [
+      "34a875f29f69841a|2021-07-29--13-02-09"
+    ],
+    "KIA_NIRO_HEV_2ND_GEN": [
+      "db04d2c63990e3ba|2023-02-08--16-52-39"
+    ],
+    "KIA_NIRO_PHEV": [
+      "173219cf50acdd7b|2021-07-05--10-27-41"
+    ],
+    "KIA_NIRO_PHEV_2022": [
+      "23349923ba5c4e3b|2023-12-02--08-51-54"
+    ],
+    "KIA_OPTIMA_G4": [
+      "7653b2bce7bcfdaa|2020-03-04--15-34-32"
+    ],
+    "KIA_OPTIMA_G4_FL": [
+      "018654717bc93d7d|2022-09-19--23-11-10"
+    ],
+    "KIA_OPTIMA_H": [
+      "f9716670b2481438|2023-08-23--14-49-50"
+    ],
+    "KIA_OPTIMA_H_G4_FL": [
+      "6a42c1197b2a8179|2023-09-21--10-23-44"
+    ],
+    "KIA_SELTOS": [
+      "c75a59efa0ecd502|2021-03-11--20-52-55"
+    ],
+    "KIA_SORENTO": [
+      "5875672fc1d4bf57|2020-07-23--21-33-28"
+    ],
+    "KIA_SORENTO_4TH_GEN": [
+      "1d0d000db3370fd0|2023-01-04--22-28-42"
+    ],
+    "KIA_SORENTO_HEV_4TH_GEN": [
+      "628935d7d3e5f4f7|2022-11-30--01-12-46",
+      "fc19648042eb6896|2023-08-16--11-43-27"
+    ],
+    "KIA_SPORTAGE_5TH_GEN": [
+      "09559f1fcaed4704|2023-11-16--02-24-57",
+      "192283cdbb7a58c2|2022-10-15--01-43-18",
+      "b3537035ffe6a7d6|2022-10-17--15-23-49"
+    ],
+    "KIA_STINGER": [
+      "5dddcbca6eb66c62|2020-07-26--13-24-19"
+    ],
+    "KIA_STINGER_2022": [
+      "5b50b883a4259afb|2022-11-09--15-00-42"
+    ]
+  },
+  "casper_summary": {
+    "platform_models": [
+      "HYUNDAI_CASPER",
+      "HYUNDAI_CASPER_EV"
+    ],
+    "fw_models": [],
+    "routes_by_model": {},
+    "casper_ev_in_platform_models": true,
+    "casper_ev_in_fw_models": false,
+    "casper_ev_has_test_route": false
+  }
+}
