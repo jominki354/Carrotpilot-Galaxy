@@ -102,6 +102,7 @@ fun DriveScreen(
       appendLine("g2_inference_latency_ms_p50=${String.format("%.2f", modelRuntimeState.inferenceLatencyMsP50)}")
       appendLine("g2_inference_latency_ms_p95=${String.format("%.2f", modelRuntimeState.inferenceLatencyMsP95)}")
       appendLine("g2_inference_failures=${modelRuntimeState.inferenceFailures}")
+      appendLine("g2_inference_last_failure=${modelRuntimeState.inferenceLastFailure}")
       appendLine("model_suite_report:")
       appendLine(modelSuiteText)
     }
@@ -340,6 +341,7 @@ fun DriveScreen(
         Text(text = "G2 inferenceLatencyP50(ms): ${String.format("%.2f", modelRuntimeState.inferenceLatencyMsP50)}")
         Text(text = "G2 inferenceLatencyP95(ms): ${String.format("%.2f", modelRuntimeState.inferenceLatencyMsP95)}")
         Text(text = "G2 inferenceFailures: ${modelRuntimeState.inferenceFailures}")
+        Text(text = "G2 inferenceLastFailure: ${modelRuntimeState.inferenceLastFailure}")
         Spacer(modifier = Modifier.height(12.dp))
       }
 

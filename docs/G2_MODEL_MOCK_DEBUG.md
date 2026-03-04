@@ -55,6 +55,7 @@
 - `G2 inferenceLatencyP50(ms)`: 0 초과
 - `G2 inferenceLatencyP95(ms)`: P50 이상
 - `G2 inferenceFailures`: 0 유지
+- `G2 inferenceLastFailure`: `-` 유지
 5. `Stop G2` 클릭 후 `Copy Debug Text`로 결과 공유
 
 참고:
@@ -80,6 +81,7 @@
 - `G2 inferenceLatencyP50(ms)`
 - `G2 inferenceLatencyP95(ms)`
 - `G2 inferenceFailures`
+- `G2 inferenceLastFailure`
 
 ## 6. 현재 범위 제한
 

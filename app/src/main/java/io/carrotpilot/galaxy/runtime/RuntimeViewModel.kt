@@ -481,6 +481,7 @@ class RuntimeViewModel(
       appendLine("g2_inference_latency_ms_p50=${String.format("%.2f", modelRuntimeState.inferenceLatencyMsP50)}")
       appendLine("g2_inference_latency_ms_p95=${String.format("%.2f", modelRuntimeState.inferenceLatencyMsP95)}")
       appendLine("g2_inference_failures=${modelRuntimeState.inferenceFailures}")
+      appendLine("g2_inference_last_failure=${modelRuntimeState.inferenceLastFailure}")
       appendLine("model_suite_report:")
       appendLine(modelSuiteText)
     }

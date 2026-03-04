@@ -38,6 +38,7 @@ class ModelRuntimeCameraPipeline(
   @Volatile private var inferenceFailureCount: Long = 0L
   @Volatile private var inferenceLatencyP50Ms: Double = 0.0
   @Volatile private var inferenceLatencyP95Ms: Double = 0.0
+  @Volatile private var inferenceLastFailure: String = "-"
   @Volatile private var modelTimeoutStreak: Int = 0
   @Volatile private var poseTimeoutStreak: Int = 0
   private val inferenceLatenciesMs = ArrayDeque<Double>()
@@ -54,6 +55,7 @@ class ModelRuntimeCameraPipeline(
         inferenceReady = false,
         inferenceOutputCount = 0L,
         inferenceFailures = 0L,
+        inferenceLastFailure = "-",
         updatedAtMs = nowMs(),
       )
       return
@@ -70,6 +72,7 @@ class ModelRuntimeCameraPipeline(
       inferenceLatencyMsP50 = inferenceLatencyP50Ms,
       inferenceLatencyMsP95 = inferenceLatencyP95Ms,
       inferenceFailures = inferenceFailureCount,
+      inferenceLastFailure = inferenceLastFailure,
       updatedAtMs = nowMs(),
     )
     sessionActive = true
@@ -122,6 +125,7 @@ class ModelRuntimeCameraPipeline(
           inferenceLatencyMsP50 = inferenceLatencyP50Ms,
           inferenceLatencyMsP95 = inferenceLatencyP95Ms,
           inferenceFailures = inferenceFailureCount,
+          inferenceLastFailure = inferenceLastFailure,
           updatedAtMs = now,
         )
       }
@@ -152,6 +156,7 @@ class ModelRuntimeCameraPipeline(
       inferenceLatencyMsP50 = inferenceLatencyP50Ms,
       inferenceLatencyMsP95 = inferenceLatencyP95Ms,
       inferenceFailures = inferenceFailureCount,
+      inferenceLastFailure = inferenceLastFailure,
       updatedAtMs = nowMs(),
     )
   }
@@ -173,6 +178,7 @@ class ModelRuntimeCameraPipeline(
       inferenceReady = false,
       inferenceOutputCount = 0L,
       inferenceFailures = 0L,
+      inferenceLastFailure = "-",
       updatedAtMs = nowMs(),
     )
   }
@@ -204,8 +210,10 @@ class ModelRuntimeCameraPipeline(
   private fun applyInferenceResult(result: ModelInferenceResult) {
     if (result.success) {
       inferenceOutputCount += max(1, result.outputsProduced).toLong()
+      inferenceLastFailure = "-"
     } else {
       inferenceFailureCount += 1
+      inferenceLastFailure = result.failureReason?.ifBlank { "unknown" } ?: "unknown"
     }
 
     if (result.latencyMs > 0.0) {
@@ -236,6 +244,7 @@ class ModelRuntimeCameraPipeline(
     inferenceFailureCount = 0L
     inferenceLatencyP50Ms = 0.0
     inferenceLatencyP95Ms = 0.0
+    inferenceLastFailure = "-"
     inferenceLatenciesMs.clear()
     modelTimeoutStreak = 0
     poseTimeoutStreak = 0

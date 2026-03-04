@@ -31,6 +31,7 @@ class ModelRuntimeMockPipelineTest {
     assertTrue(pipeline.state.value.inferenceLatencyMsP50 > 0.0)
     assertTrue(pipeline.state.value.inferenceLatencyMsP95 >= pipeline.state.value.inferenceLatencyMsP50)
     assertEquals(0L, pipeline.state.value.inferenceFailures)
+    assertEquals("-", pipeline.state.value.inferenceLastFailure)
 
     pipeline.stop()
     scope.cancel()
@@ -54,6 +55,7 @@ class ModelRuntimeMockPipelineTest {
     assertTrue(pipeline.state.value.inferenceReady)
     assertTrue(pipeline.state.value.inferenceOutputCount > 0L)
     assertEquals(0L, pipeline.state.value.inferenceFailures)
+    assertEquals("-", pipeline.state.value.inferenceLastFailure)
 
     pipeline.stop()
     scope.cancel()
@@ -76,6 +78,7 @@ class ModelRuntimeMockPipelineTest {
     assertEquals("MOCK", pipeline.state.value.inferenceBackend)
     assertTrue(pipeline.state.value.inferenceReady)
     assertEquals(0L, pipeline.state.value.inferenceFailures)
+    assertEquals("-", pipeline.state.value.inferenceLastFailure)
 
     pipeline.stop()
     scope.cancel()
@@ -96,6 +99,7 @@ class ModelRuntimeMockPipelineTest {
     assertEquals("MOCK", pipeline.state.value.inferenceBackend)
     assertTrue(pipeline.state.value.inferenceOutputCount > 0L)
     assertEquals(0L, pipeline.state.value.inferenceFailures)
+    assertEquals("-", pipeline.state.value.inferenceLastFailure)
 
     scope.cancel()
   }

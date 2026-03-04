@@ -39,6 +39,7 @@ class ModelRuntimeMockPipeline(
   private var inferenceFailureCount: Long = 0L
   private var inferenceLatencyP50Ms: Double = 0.0
   private var inferenceLatencyP95Ms: Double = 0.0
+  private var inferenceLastFailure: String = "-"
   private val inferenceLatenciesMs = ArrayDeque<Double>()
 
   suspend fun start(scenario: ModelRuntimeMockScenario) {
@@ -53,6 +54,7 @@ class ModelRuntimeMockPipeline(
         inferenceReady = false,
         inferenceOutputCount = 0L,
         inferenceFailures = 0L,
+        inferenceLastFailure = "-",
         updatedAtMs = nowMs(),
       )
       return
@@ -71,6 +73,7 @@ class ModelRuntimeMockPipeline(
       inferenceLatencyMsP50 = inferenceLatencyP50Ms,
       inferenceLatencyMsP95 = inferenceLatencyP95Ms,
       inferenceFailures = inferenceFailureCount,
+      inferenceLastFailure = inferenceLastFailure,
       updatedAtMs = nowMs(),
     )
 
@@ -144,6 +147,7 @@ class ModelRuntimeMockPipeline(
           inferenceLatencyMsP50 = inferenceLatencyP50Ms,
           inferenceLatencyMsP95 = inferenceLatencyP95Ms,
           inferenceFailures = inferenceFailureCount,
+          inferenceLastFailure = inferenceLastFailure,
           updatedAtMs = now,
         )
 
@@ -188,8 +192,10 @@ class ModelRuntimeMockPipeline(
   private fun applyInferenceResult(result: ModelInferenceResult) {
     if (result.success) {
       inferenceOutputCount += max(1, result.outputsProduced).toLong()
+      inferenceLastFailure = "-"
     } else {
       inferenceFailureCount += 1
+      inferenceLastFailure = result.failureReason?.ifBlank { "unknown" } ?: "unknown"
     }
 
     if (result.latencyMs > 0.0) {
@@ -220,6 +226,7 @@ class ModelRuntimeMockPipeline(
     inferenceFailureCount = 0L
     inferenceLatencyP50Ms = 0.0
     inferenceLatencyP95Ms = 0.0
+    inferenceLastFailure = "-"
     inferenceLatenciesMs.clear()
   }
 }

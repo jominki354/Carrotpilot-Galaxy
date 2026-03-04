@@ -23,6 +23,7 @@ class ModelRuntimeCameraPipelineTest {
     assertTrue(!pipeline.state.value.inferenceReady)
     assertEquals(0L, pipeline.state.value.inferenceOutputCount)
     assertEquals(0L, pipeline.state.value.inferenceFailures)
+    assertEquals("-", pipeline.state.value.inferenceLastFailure)
 
     pipeline.stopSession()
     scope.cancel()
@@ -42,6 +43,7 @@ class ModelRuntimeCameraPipelineTest {
     assertTrue(pipeline.state.value.inferenceReady)
     assertEquals(0L, pipeline.state.value.inferenceOutputCount)
     assertEquals(0L, pipeline.state.value.inferenceFailures)
+    assertEquals("-", pipeline.state.value.inferenceLastFailure)
 
     pipeline.stopSession()
     scope.cancel()
@@ -68,6 +70,7 @@ class ModelRuntimeCameraPipelineTest {
     assertTrue(pipeline.state.value.inferenceLatencyMsP50 > 0.0)
     assertTrue(pipeline.state.value.inferenceLatencyMsP95 >= pipeline.state.value.inferenceLatencyMsP50)
     assertEquals(0L, pipeline.state.value.inferenceFailures)
+    assertEquals("-", pipeline.state.value.inferenceLastFailure)
 
     scope.cancel()
   }
@@ -134,6 +137,7 @@ class ModelRuntimeCameraPipelineTest {
     assertEquals(0L, pipeline.state.value.modelFrameCount)
     assertEquals(0L, pipeline.state.value.inferenceOutputCount)
     assertEquals(0L, pipeline.state.value.inferenceFailures)
+    assertEquals("-", pipeline.state.value.inferenceLastFailure)
 
     scope.cancel()
   }

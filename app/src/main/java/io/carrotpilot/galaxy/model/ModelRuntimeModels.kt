@@ -37,5 +37,6 @@ data class ModelRuntimeState(
   val inferenceLatencyMsP50: Double = 0.0,
   val inferenceLatencyMsP95: Double = 0.0,
   val inferenceFailures: Long = 0L,
+  val inferenceLastFailure: String = "-",
   val updatedAtMs: Long = System.currentTimeMillis(),
 )

@@ -50,6 +50,7 @@ $backend = $snapshot["g2_inference_backend"]
 $ready = $snapshot["g2_inference_ready"]
 $failuresText = if ($snapshot.ContainsKey("g2_inference_failures")) { $snapshot["g2_inference_failures"] } else { "0" }
 $failures = [long]$failuresText
+$lastFailure = if ($snapshot.ContainsKey("g2_inference_last_failure")) { $snapshot["g2_inference_last_failure"] } else { "-" }
 $stage = $snapshot["g2_stage"]
 $g2Error = $snapshot["g2_error"]
 $p95 = $snapshot["g2_inference_latency_ms_p95"]
@@ -60,6 +61,7 @@ Write-Host "failures=$failures"
 Write-Host "stage=$stage"
 Write-Host "error=$g2Error"
 Write-Host "p95_ms=$p95"
+Write-Host "last_failure=$lastFailure"
 
 if ($backend -eq "ONNX_RUNTIME_ANDROID[file:models/comma_model.onnx]" -and $ready -eq "true" -and $failures -eq 0) {
   Write-Host "compat_verdict=PASS_COMMA_ORT_EXTERNAL"

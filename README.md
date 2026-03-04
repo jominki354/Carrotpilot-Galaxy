@@ -24,6 +24,7 @@ Android 16 / One UI 8 기반 `single-APK` 코어 런타임으로 Carrotpilot/ope
 - `g2_inference_latency_ms_p50`
 - `g2_inference_latency_ms_p95`
 - `g2_inference_failures`
+- `g2_inference_last_failure`
 
 진행 게이트:
 1. G0 아키텍처 동결
