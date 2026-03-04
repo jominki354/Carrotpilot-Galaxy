@@ -61,6 +61,11 @@ Write-Host "stage=$stage"
 Write-Host "error=$g2Error"
 Write-Host "p95_ms=$p95"
 
+if ($backend -eq "ONNX_RUNTIME_ANDROID[file:models/comma_model.onnx]" -and $ready -eq "true" -and $failures -eq 0) {
+  Write-Host "compat_verdict=PASS_COMMA_ORT_EXTERNAL"
+  exit 0
+}
+
 if ($backend -eq "ONNX_RUNTIME_ANDROID[models/comma_model.onnx]" -and $ready -eq "true" -and $failures -eq 0) {
   Write-Host "compat_verdict=PASS_COMMA_ORT"
   exit 0

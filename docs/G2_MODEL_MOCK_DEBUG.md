@@ -46,6 +46,7 @@
 - `G2 modelHz`: 0 초과
 - `G2 modelFrames`: 증가 중
 - `G2 inferenceBackend`:
+  - `ONNX_RUNTIME_ANDROID[file:models/comma_model.onnx]` 또는
   - `ONNX_RUNTIME_ANDROID[models/comma_model.onnx]` 또는
   - `ONNX_RUNTIME_ANDROID[models/mul_1.onnx]` (probe fallback) 또는
   - `ONNX_PLACEHOLDER` (ORT 전부 실패)
@@ -84,7 +85,10 @@
 
 1. 본 문서는 `Model Mock + Real Camera ingest`를 다룸
 2. ONNX 로드 우선순위:
-- `models/comma_model.onnx` -> 실패 시 `models/mul_1.onnx` -> 실패 시 `ONNX_PLACEHOLDER`
+- `external files/models/comma_model.onnx` ->
+- `assets/models/comma_model.onnx` ->
+- `assets/models/mul_1.onnx` ->
+- `ONNX_PLACEHOLDER`
 3. livePose 입력 결합은 다음 단계
 4. comma 실모델은 표준 ONNX와 다를 수 있어(커스텀 op/입출력 스키마 차이), 별도 호환 검증이 필요함
 
@@ -125,14 +129,18 @@ QNN/SNPE 착수 조건(하나라도 만족 시):
 3. fallback 정책 유지(실패 시 즉시 placeholder 복귀)
 
 권장 파일 배치:
-1. comma 실모델을 `app/src/main/assets/models/comma_model.onnx`로 배치
-2. 앱 재설치 후 `g2_inference_backend`가 `...comma_model.onnx`인지 확인
+1. 가장 쉬운 경로(재빌드 없음):
+- `powershell -ExecutionPolicy Bypass -File tools/push_comma_model_and_probe.ps1 -ModelPath C:\path\comma_model.onnx`
+2. 수동 경로(재빌드 필요):
+- `app/src/main/assets/models/comma_model.onnx`로 배치 후 앱 재설치
+3. 앱 실행 후 `g2_inference_backend`가 `...comma_model.onnx`인지 확인
 
 호환성 프로브(원클릭):
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools/run_g2_onnx_compat_probe.ps1
 ```
 출력:
+- `compat_verdict=PASS_COMMA_ORT_EXTERNAL`
 - `compat_verdict=PASS_COMMA_ORT`
 - `compat_verdict=PASS_PROBE_FALLBACK`
 - `compat_verdict=FAIL_ORT_INIT`

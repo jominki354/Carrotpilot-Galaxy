@@ -13,6 +13,7 @@ import io.carrotpilot.galaxy.model.ModelRuntimeState
 import io.carrotpilot.galaxy.model.FallbackInferenceEngine
 import io.carrotpilot.galaxy.model.OnnxPlaceholderInferenceEngine
 import io.carrotpilot.galaxy.model.OnnxRuntimeAssetInferenceEngine
+import io.carrotpilot.galaxy.model.OnnxRuntimeExternalFileInferenceEngine
 import io.carrotpilot.galaxy.vehicle.AndroidCanIngestSource
 import io.carrotpilot.galaxy.vehicle.AndroidUsbHostManager
 import io.carrotpilot.galaxy.vehicle.DefaultCarInterfaceLoader
@@ -63,16 +64,22 @@ class RuntimeViewModel(
   private val modelRuntimeCamera = ModelRuntimeCameraPipeline(
     scope = viewModelScope,
     inferenceEngine = FallbackInferenceEngine(
-      primary = OnnxRuntimeAssetInferenceEngine(
+      primary = OnnxRuntimeExternalFileInferenceEngine(
         context = appContext,
-        modelAssetPath = "models/comma_model.onnx",
+        relativeExternalFilePath = "models/comma_model.onnx",
       ),
       fallback = FallbackInferenceEngine(
         primary = OnnxRuntimeAssetInferenceEngine(
           context = appContext,
-          modelAssetPath = "models/mul_1.onnx",
+          modelAssetPath = "models/comma_model.onnx",
         ),
-        fallback = OnnxPlaceholderInferenceEngine(),
+        fallback = FallbackInferenceEngine(
+          primary = OnnxRuntimeAssetInferenceEngine(
+            context = appContext,
+            modelAssetPath = "models/mul_1.onnx",
+          ),
+          fallback = OnnxPlaceholderInferenceEngine(),
+        ),
       ),
     ),
   )

@@ -124,12 +124,6 @@ class MainActivity : ComponentActivity() {
         vm.stopModelRuntimeRealCameraSession()
         vm.runModelSuite()
       }
-      val latestStartModelRuntime by rememberUpdatedState(startModelRuntime)
-      val latestStopModelRuntime by rememberUpdatedState(stopModelRuntime)
-      val latestResetModelRuntime by rememberUpdatedState(resetModelRuntime)
-      val latestSelectModelSourceMode by rememberUpdatedState(selectModelSourceMode)
-      val latestRunModelSuite by rememberUpdatedState(runModelSuite)
-      val latestDebugSnapshot by rememberUpdatedState(vm.buildDebugSnapshotText())
 
       DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -180,26 +174,65 @@ class MainActivity : ComponentActivity() {
             if (intent?.action != AUTOMATION_ACTION) return
             val command = intent.getStringExtra(AUTOMATION_EXTRA_COMMAND)?.trim().orEmpty()
             when (command) {
-              "MODEL_SOURCE_REAL_CAMERA" ->
-                latestSelectModelSourceMode(ModelRuntimeSourceMode.REAL_CAMERA)
+              "MODEL_SOURCE_REAL_CAMERA" -> {
+                resumeRealCameraOnForeground = false
+                cameraFrameSource.stop()
+                vm.stopModelRuntimeRealCameraSession()
+                vm.selectModelSourceMode(ModelRuntimeSourceMode.REAL_CAMERA)
+              }
 
-              "MODEL_SOURCE_MOCK" ->
-                latestSelectModelSourceMode(ModelRuntimeSourceMode.MOCK)
+              "MODEL_SOURCE_MOCK" -> {
+                resumeRealCameraOnForeground = false
+                cameraFrameSource.stop()
+                vm.stopModelRuntimeRealCameraSession()
+                vm.selectModelSourceMode(ModelRuntimeSourceMode.MOCK)
+              }
 
-              "START_G2" ->
-                latestStartModelRuntime()
+              "START_G2" -> {
+                resumeRealCameraOnForeground = false
+                when (vm.modelSourceMode.value) {
+                  ModelRuntimeSourceMode.MOCK -> vm.startModelRuntimeMock()
+                  ModelRuntimeSourceMode.REAL_CAMERA -> {
+                    val granted = ContextCompat.checkSelfPermission(
+                      this@MainActivity,
+                      Manifest.permission.CAMERA,
+                    ) == PackageManager.PERMISSION_GRANTED
+                    if (granted) {
+                      startRealCameraSession()
+                    } else {
+                      cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                  }
+                }
+              }
 
-              "STOP_G2" ->
-                latestStopModelRuntime()
+              "STOP_G2" -> {
+                resumeRealCameraOnForeground = false
+                cameraFrameSource.stop()
+                when (vm.modelSourceMode.value) {
+                  ModelRuntimeSourceMode.MOCK -> vm.stopModelRuntimeMock()
+                  ModelRuntimeSourceMode.REAL_CAMERA -> vm.stopModelRuntimeRealCameraSession()
+                }
+              }
 
-              "RESET_G2" ->
-                latestResetModelRuntime()
+              "RESET_G2" -> {
+                resumeRealCameraOnForeground = false
+                cameraFrameSource.stop()
+                when (vm.modelSourceMode.value) {
+                  ModelRuntimeSourceMode.MOCK -> vm.resetModelRuntimeMock()
+                  ModelRuntimeSourceMode.REAL_CAMERA -> vm.resetModelRuntimeRealCameraSession()
+                }
+              }
 
-              "RUN_MODEL_SUITE" ->
-                latestRunModelSuite()
+              "RUN_MODEL_SUITE" -> {
+                resumeRealCameraOnForeground = false
+                cameraFrameSource.stop()
+                vm.stopModelRuntimeRealCameraSession()
+                vm.runModelSuite()
+              }
 
               "DUMP" ->
-                Log.i(AUTOMATION_LOG_TAG, latestDebugSnapshot)
+                Log.i(AUTOMATION_LOG_TAG, vm.buildDebugSnapshotText())
 
               else ->
                 Log.w(AUTOMATION_LOG_TAG, "unknown cmd='$command'")
